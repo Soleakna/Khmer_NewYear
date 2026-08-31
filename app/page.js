@@ -1,4 +1,5 @@
 import collection from "../collection.config.js";
+import EntryCard from "../components/EntryCard";
 
 const styles = {
   wrap: {
@@ -57,6 +58,23 @@ const styles = {
 };
 
 export default function Home() {
+  const entries = [
+    {
+      title: "Num Ansom",
+      description:
+        "Sticky rice cake wrapped in banana leaf, made by families in the days before Khmer New Year. My mother still makes it every year — សំណុំបាយបិណ្ឌ",
+      contributor: "My mother",
+      place: "Phnom Penh, Cambodia",
+    },
+    {
+      title: "Khor",
+      description:
+        "A slow-braised Cambodian dish, often pork or fish cooked with palm sugar and fish sauce until dark and tender, served during Khmer New Year gatherings.",
+      contributor: "My grandmother",
+      place: "A village pagoda in Kratie",
+    },
+  ];
+
   return (
     <main style={styles.wrap}>
       <p style={styles.kicker}>KHMER LIVING ARCHIVE</p>
@@ -72,7 +90,11 @@ export default function Home() {
         <p style={styles.cardValue}>{collection.source}</p>
       </div>
 
-      <p style={styles.count}>entries in the archive: 0 (for now)</p>
+      {entries.map((entry) => (
+        <EntryCard key={entry.title} entry={entry} />
+      ))}
+
+      <p style={styles.count}>entries in the archive: {entries.length} (for now)</p>
 
       <footer style={styles.footer}>
         Built in ICT 340 — Vibe Coding, American University of Phnom Penh, Fall
