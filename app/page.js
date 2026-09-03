@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 import collection from "../collection.config.js";
 import EntryCard from "../components/EntryCard";
 import entries from "../data/entries.js";
@@ -43,6 +45,27 @@ const styles = {
     fontSize: 16,
     margin: "6px 0 0",
   },
+  search: {
+    width: "100%",
+    marginTop: 48,
+    padding: "12px 16px",
+    backgroundColor: "#1C222C",
+    border: "1px solid #2E3644",
+    borderRadius: 10,
+    color: "#E8EDF2",
+    fontSize: 16,
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+  },
+  noResults: {
+    marginTop: 48,
+    padding: 24,
+    backgroundColor: "#1C222C",
+    border: "1px solid #2E3644",
+    borderRadius: 10,
+    fontSize: 16,
+    color: "#97A1B3",
+  },
   count: {
     fontFamily: "'Courier New', monospace",
     fontSize: 14,
@@ -59,6 +82,19 @@ const styles = {
 };
 
 export default function Home() {
+  const [query, setQuery] = useState("");
+
+  // Case-insensitive filter over title and description.
+  // Empty (or whitespace-only) input keeps every entry visible.
+  const filteredEntries = entries.filter((entry) => {
+    const term = query.trim().toLowerCase();
+    if (term === "") return true;
+    return (
+      entry.title.toLowerCase().includes(term) ||
+      entry.description.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <main style={styles.wrap}>
       <p style={styles.kicker}>KHMER LIVING ARCHIVE</p>
@@ -74,9 +110,22 @@ export default function Home() {
         <p style={styles.cardValue}>{collection.source}</p>
       </div>
 
-      {entries.map((entry) => (
-        <EntryCard key={entry.title} entry={entry} />
-      ))}
+      <input
+        type="search"
+        style={styles.search}
+        placeholder="Search by title or description…"
+        aria-label="Search entries"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+
+      {filteredEntries.length > 0 ? (
+        filteredEntries.map((entry) => (
+          <EntryCard key={entry.title} entry={entry} />
+        ))
+      ) : (
+        <p style={styles.noResults}>No results for "{query}".</p>
+      )}
 
       <p style={styles.count}>entries in the archive: {entries.length} (for now)</p>
 
