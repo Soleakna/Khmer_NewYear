@@ -27,6 +27,13 @@ const entries = [
     contributor: "My family and village community",
     place: "Kbal Trach village, Kratie province",
   },
+  {
+    title: "Welcoming the Tevada (ទទួលទេវតា)",
+    description:
+      "Every home across the country prepares an offering at the exact calculated hour of the year's transition to welcome the incoming angel (Tevada). Families clean and decorate the front of the house and the household altar, then set up an offering table featuring a decorated banana tree trunk structure, fresh fruits, juice, five incense sticks, five candles, young rice seedlings, and flowers associated with that year's angel.",
+    contributor: "My family",
+    place: "Kbal Trach village, Kratie province",
+  },
 ];
 
 export default entries;
