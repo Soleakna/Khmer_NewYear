@@ -34,6 +34,27 @@ const entries = [
     contributor: "My family",
     place: "Kbal Trach village, Kratie province",
   },
+  {
+    title: "Day 1: Maha Songkran (មហាសង្រ្កាន្ត)",
+    description:
+      "The welcoming of the New Year and the descent of the new celestial angel. People clean and decorate their homes, set up food and fruit offerings on tables for the incoming angel, and visit pagodas to offer food to monks..",
+    contributor: "My family",
+    place: "Kbal Trach village, Kratie province",
+  },
+  {
+    title: "Day 2: Virak Vanabat (វិរៈវ័នបត)",
+    description:
+      "A day dedicated to charity, gratitude, and family unity. Children give gifts, clothes, or money to their parents and grandparents. People also donate food and money to the poor",
+    contributor: "My family",
+    place: "Kbal Trach village, Kratie province",
+  },
+  {
+    title: "Day 3: Vearak Loeng Sak (វិរៈឡើងស័ក)",
+    description:
+      "The official start of the new solar year and a time for spiritual cleansing. Buddhists bathe Buddha statues and respected elders with scented water (Pithi Sroang Preah) to wash away bad karma and bad luck from the previous year.",
+    contributor: "My family",
+    place: "Kbal Trach village, Kratie province",
+  },
 ];
 
 export default entries;
