@@ -6,40 +6,53 @@ const styles = {
     flexDirection: "column",
     height: "100%",
     padding: 24,
-    backgroundColor: "#1C222C",
-    border: "1px solid #2E3644",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
     borderRadius: 10,
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
   },
   title: {
     fontSize: 24,
     fontWeight: 700,
+    color: "#ffffff",
     margin: "0 0 8px",
     lineHeight: 1.2,
   },
   description: {
     flexGrow: 1,
     fontSize: 16,
-    color: "#97A1B3",
+    color: "#ffffff",
     lineHeight: 1.6,
     margin: "0 0 16px",
   },
   label: {
     fontFamily: "'Courier New', monospace",
     fontSize: 12,
-    color: "#97A1B3",
+    color: "#ffffff",
     margin: "12px 0 0",
   },
   value: {
     fontSize: 16,
+    color: "#ffffff",
     margin: "4px 0 0",
+  },
+  image: {
+    width: "100%",
+    height: 250,
+    objectFit: "cover",
+    borderRadius: 8,
+    marginBottom: 16,
   },
 };
 
 export default function EntryCard({ entry }) {
-  const { title, description, contributor, place } = entry;
+  const { title, description, contributor, place, image } = entry;
 
   return (
     <article style={styles.card}>
+      {image && <img src={image} alt={title} style={styles.image} />}
       <h2 style={styles.title}>{title}</h2>
       <p style={styles.description}>{description}</p>
       <p style={styles.label}>CONTRIBUTED BY</p>
