@@ -2,7 +2,9 @@
 // all four strings. Missing fields render silently as blanks, so callers must pass all four.
 const styles = {
   card: {
-    marginTop: 48,
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
     padding: 24,
     backgroundColor: "#1C222C",
     border: "1px solid #2E3644",
@@ -15,6 +17,7 @@ const styles = {
     lineHeight: 1.2,
   },
   description: {
+    flexGrow: 1,
     fontSize: 16,
     color: "#97A1B3",
     lineHeight: 1.6,

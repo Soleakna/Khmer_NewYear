@@ -6,9 +6,9 @@ import entries from "../data/entries.js";
 
 const styles = {
   wrap: {
-    maxWidth: 720,
+    maxWidth: 1200,
     margin: "0 auto",
-    padding: "80px 24px",
+    padding: "80px 20px",
   },
   kicker: {
     fontFamily: "'Courier New', monospace",
@@ -25,7 +25,7 @@ const styles = {
   description: {
     fontSize: 18,
     color: "#97A1B3",
-    lineHeight: 1.6,
+    lineHeight: 1.5,
     margin: 0,
   },
   card: {
@@ -44,6 +44,13 @@ const styles = {
   cardValue: {
     fontSize: 16,
     margin: "6px 0 0",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+    rowGap: 80,
+    columnGap: 28,
+    marginTop: 48,
   },
   search: {
     width: "100%",
@@ -120,9 +127,11 @@ export default function Home() {
       />
 
       {filteredEntries.length > 0 ? (
-        filteredEntries.map((entry) => (
-          <EntryCard key={entry.title} entry={entry} />
-        ))
+        <div style={styles.grid}>
+          {filteredEntries.map((entry) => (
+            <EntryCard key={entry.title} entry={entry} />
+          ))}
+        </div>
       ) : (
         <p style={styles.noResults}>No results for "{query}".</p>
       )}

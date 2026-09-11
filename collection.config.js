@@ -11,7 +11,7 @@ const collection = {
   name: "Khmer New Year",
 
   // One sentence: what is this archive, and why does it matter?
-  description: "A living archive of a piece of Khmer culture, built for ICT 340.",
+  // description: "A living archive of a piece of Khmer culture, built for ICT 340.",
 
   // Who is building this archive? Your name, as you want it shown.
   curator: "Soleakna",
