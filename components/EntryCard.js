@@ -1,4 +1,6 @@
-// Expects an "entry" prop shaped { title, description, contributor, place },
+import Link from "next/link";
+
+// Expects an "entry" prop shaped { title, description, contributor, place, slug },
 // all four strings. Missing fields render silently as blanks, so callers must pass all four.
 const styles = {
   card: {
@@ -38,6 +40,13 @@ const styles = {
     color: "#ffffff",
     margin: "4px 0 0",
   },
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 8,
+    margin: "12px 0 0",
+  },
   image: {
     width: "100%",
     height: 250,
@@ -45,20 +54,39 @@ const styles = {
     borderRadius: 8,
     marginBottom: 16,
   },
+  link: {
+    alignSelf: "flex-start",
+    marginTop: 16,
+    padding: "10px 14px",
+    backgroundColor: "rgba(45, 212, 191, 0.15)",
+    border: "1px solid rgba(45, 212, 191, 0.45)",
+    color: "#2DD4BF",
+    borderRadius: 8,
+    textDecoration: "none",
+    fontSize: 15,
+    fontWeight: 600,
+  },
 };
 
 export default function EntryCard({ entry }) {
-  const { title, description, contributor, place, image } = entry;
+  const { title, description, contributor, place, image, slug } = entry;
 
   return (
     <article style={styles.card}>
       {image && <img src={image} alt={title} style={styles.image} />}
       <h2 style={styles.title}>{title}</h2>
       <p style={styles.description}>{description}</p>
-      <p style={styles.label}>CONTRIBUTED BY</p>
-      <p style={styles.value}>{contributor}</p>
-      <p style={styles.label}>PLACE</p>
-      <p style={styles.value}>{place}</p>
+      <p style={styles.row}>
+        <span style={{ ...styles.label, margin: 0 }}>CONTRIBUTED BY</span>
+        <span style={{ ...styles.value, margin: 0 }}>{contributor}</span>
+      </p>
+      <p style={styles.row}>
+        <span style={{ ...styles.label, margin: 0 }}>PLACE</span>
+        <span style={{ ...styles.value, margin: 0 }}>{place}</span>
+      </p>
+      <Link href={`/entries/${slug}`} style={styles.link}>
+        Explore more →
+      </Link>
     </article>
   );
 }

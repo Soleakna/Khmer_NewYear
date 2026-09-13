@@ -12,7 +12,7 @@ const styles = {
   },
   kicker: {
     fontFamily: "'Courier New', monospace",
-    color: "#2EE6A8",
+    color: "#ffffff",
     fontSize: 14,
     letterSpacing: 1,
   },
@@ -24,7 +24,7 @@ const styles = {
   },
   description: {
     fontSize: 18,
-    color: "#97A1B3",
+    color: "#ffffff",
     lineHeight: 1.5,
     margin: 0,
   },
@@ -41,7 +41,7 @@ const styles = {
   cardLabel: {
     fontFamily: "'Courier New', monospace",
     fontSize: 12,
-    color: "#99F6E4",
+    color: "#fffff",
     margin: 0,
   },
   cardValue: {
