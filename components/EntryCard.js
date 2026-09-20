@@ -6,7 +6,7 @@ const styles = {
   card: {
     display: "flex",
     flexDirection: "column",
-    height: "100%",
+    height: "90%",
     padding: 24,
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     border: "1px solid rgba(255, 255, 255, 0.18)",
@@ -23,17 +23,20 @@ const styles = {
     lineHeight: 1.2,
   },
   description: {
+    // Grows to fill the card, pinning the CONTRIBUTED BY / PLACE / Explore
+    // block to the bottom so it lines up across all cards. Long description
+    // → small gap below it; short description → wide gap (by design).
     flexGrow: 1,
     fontSize: 16,
     color: "#ffffff",
     lineHeight: 1.6,
-    margin: "0 0 16px",
+    margin: 0,
   },
   label: {
-    fontFamily: "'Courier New', monospace",
-    fontSize: 12,
+    // fontFamily: "'Courier New', monospace",
+    fontSize: 14,
     color: "#ffffff",
-    margin: "12px 0 0",
+    margin: "2px 0 0",
   },
   value: {
     fontSize: 16,
@@ -45,11 +48,11 @@ const styles = {
     flexDirection: "row",
     alignItems: "baseline",
     gap: 8,
-    margin: "12px 0 0",
+    margin: "2px 0 0",
   },
   image: {
     width: "100%",
-    height: 250,
+    height: 200,
     objectFit: "cover",
     borderRadius: 8,
     marginBottom: 16,
@@ -58,9 +61,9 @@ const styles = {
     alignSelf: "flex-start",
     marginTop: 16,
     padding: "10px 14px",
-    backgroundColor: "rgba(45, 212, 191, 0.15)",
-    border: "1px solid rgba(45, 212, 191, 0.45)",
-    color: "#2DD4BF",
+    backgroundColor: "#CA2A02",
+    border: "1px solid #972002",
+    color: "#FFFFFF",
     borderRadius: 8,
     textDecoration: "none",
     fontSize: 15,

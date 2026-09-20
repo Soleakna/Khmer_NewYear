@@ -28,16 +28,16 @@ const styles = {
     lineHeight: 1.5,
     margin: 0,
   },
-  card: {
-    marginTop: 48,
-    padding: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    border: "1px solid rgba(255, 255, 255, 0.18)",
-    borderRadius: 10,
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
-  },
+  // card: {
+  //   marginTop: 48,
+  //   padding: 24,
+  //   backgroundColor: "rgba(255, 255, 255, 0.08)",
+  //   border: "1px solid rgba(255, 255, 255, 0.18)",
+  //   borderRadius: 10,
+  //   backdropFilter: "blur(12px)",
+  //   WebkitBackdropFilter: "blur(12px)",
+  //   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
+  // },
   cardLabel: {
     fontFamily: "'Courier New', monospace",
     fontSize: 12,
@@ -46,13 +46,13 @@ const styles = {
   },
   cardValue: {
     fontSize: 16,
-    color: "rgba(255, 255, 255, 0.08)",
+    color: "rgba(245, 235, 235, 0.08)",
     margin: "6px 0 0",
   },
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-    rowGap: 80,
+    rowGap: 30,
     columnGap: 28,
     marginTop: 48,
   },
@@ -61,12 +61,12 @@ const styles = {
     marginTop: 48,
     padding: "12px 16px",
     backgroundColor: "rgba(255, 255, 255, 0.08)",
-    border: "1px solid rgba(255, 255, 255, 0.18)",
+    border: "1px solid rgba(237, 233, 233, 0.18)",
     borderRadius: 10,
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
-    color: "#2DD4BF",
+    color: "#ffffff",
     fontSize: 16,
     fontFamily: "inherit",
     boxSizing: "border-box",
@@ -81,12 +81,12 @@ const styles = {
     WebkitBackdropFilter: "blur(12px)",
     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
     fontSize: 16,
-    color: "#99F6E4",
+    color: "#ffffff",
   },
   count: {
     fontFamily: "'Courier New', monospace",
     fontSize: 14,
-    color: "#2EE6A8",
+    color: "#ffffff",
     marginTop: 48,
   },
   footer: {
@@ -94,7 +94,7 @@ const styles = {
     paddingTop: 24,
     borderTop: "1px solid #2E3644",
     fontSize: 13,
-    color: "#5A6373",
+    color: "#cbd7ec",
   },
 };
 
@@ -118,17 +118,18 @@ export default function Home() {
       <h1 style={styles.title}>{collection.name}</h1>
       <p style={styles.description}>{collection.description}</p>
 
-      <div style={styles.card}>
+      {/* <div style={styles.card}>
         <p style={styles.cardLabel}>CURATED BY</p>
         <p style={styles.cardValue}>{collection.curator}</p>
       </div>
       <div style={styles.card}>
         <p style={styles.cardLabel}>SOURCE</p>
         <p style={styles.cardValue}>{collection.source}</p>
-      </div>
+      </div> */}
 
       <input
         type="search"
+        className="search-input"
         style={styles.search}
         placeholder="Search by title or description…"
         aria-label="Search entries"
@@ -146,7 +147,7 @@ export default function Home() {
         <p style={styles.noResults}>No results for "{query}".</p>
       )}
 
-      <p style={styles.count}>entries in the archive: {entries.length} (for now)</p>
+      <p style={styles.count}>entries in the archive: {entries.length}</p>
 
       <footer style={styles.footer}>
         Built in ICT 340 — Vibe Coding, American University of Phnom Penh, Fall

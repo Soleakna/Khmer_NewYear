@@ -1,5 +1,6 @@
 import Link from "next/link";
 import entries from "../../../data/entries.js";
+import details from "../../../data/details.js";
 
 const styles = {
   wrap: {
@@ -77,7 +78,7 @@ export default async function EntryDetail({ params }) {
     return (
       <main style={styles.wrap}>
         <p style={styles.missing}>
-          Sorry — there is no such entry in this archive.
+          Sorry, there is no such entry in this archive.
         </p>
         <Link href="/" style={styles.back}>
           ← Back to the archive
@@ -86,8 +87,9 @@ export default async function EntryDetail({ params }) {
     );
   }
 
-  // Longer optional text; until a "detail" field is written, show the card blurb.
-  const text = entry.detail || entry.description;
+  // Long-form text lives in data/details.js, keyed by slug. If a slug
+  // is missing there, fall back to the card blurb (entry.description).
+  const text = details[slug] || entry.description;
 
   return (
     <main style={styles.wrap}>

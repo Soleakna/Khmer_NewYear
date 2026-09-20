@@ -1,0 +1,22 @@
+/* ============================================================
+   SEARCH BOX TWEAKS (loaded from app/layout.js)
+
+   1. The "black border" on click is the BROWSER's focus ring
+      (outline), not the input's own border. `outline: none`
+      removes it. The white border itself lives in app/page.js
+      (styles.search -> border) and stays.
+
+   2. Placeholder text color is set with ::placeholder, which
+      inline styles cannot target.
+
+   Changing values here updates the search box everywhere.
+============================================================ */
+
+input.search-input::placeholder {
+  color: #ffffff;
+  opacity: 1; /* Firefox dims placeholders by default; keep it white */
+}
+
+input.search-input:focus {
+  outline: none; /* removes the browser's black focus border */
+}

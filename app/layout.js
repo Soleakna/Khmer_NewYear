@@ -1,4 +1,5 @@
 import collection from "../collection.config.js";
+import "./search.css";
 
 export const metadata = {
   title: `${collection.name} — Khmer Living Archive`,
