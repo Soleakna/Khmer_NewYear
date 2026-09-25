@@ -82,14 +82,15 @@ const styles = {
   },
   back: {
     display: "inline-block",
-    marginTop: 24,
+    marginTop: 32,
     padding: "10px 14px",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    border: "1px solid rgba(255, 255, 255, 0.18)",
+    backgroundColor: "#CA2A02",
+    border: "1px solid #972002",
     color: "#ffffff",
     borderRadius: 8,
     textDecoration: "none",
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: 600,
   },
 };
 
@@ -177,6 +178,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
+          className="hover-button"
           disabled={isLoading}
           style={{
             ...styles.button,
@@ -195,8 +197,8 @@ export default function LoginPage() {
         </Link>
       </p>
 
-      <Link href="/" style={styles.back}>
-        ← Back to the archive
+      <Link href="/" style={styles.back} className="hover-button">
+        ← Back to home
       </Link>
     </main>
   );

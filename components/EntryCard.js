@@ -35,7 +35,7 @@ const styles = {
   label: {
     // fontFamily: "'Courier New', monospace",
     fontSize: 14,
-    color: "#ffffff",
+    color: "",
     margin: "2px 0 0",
   },
   value: {
@@ -75,19 +75,19 @@ export default function EntryCard({ entry }) {
   const { title, description, contributor, place, image, slug } = entry;
 
   return (
-    <article style={styles.card}>
+    <article style={styles.card} className="hover-card">
       {image && <img src={image} alt={title} style={styles.image} />}
       <h2 style={styles.title}>{title}</h2>
       <p style={styles.description}>{description}</p>
       <p style={styles.row}>
-        <span style={{ ...styles.label, margin: 0 }}>CONTRIBUTED BY</span>
+        <span style={{ ...styles.label, margin: 0 }}>CONTRIBUTED BY : </span>
         <span style={{ ...styles.value, margin: 0 }}>{contributor}</span>
       </p>
       <p style={styles.row}>
-        <span style={{ ...styles.label, margin: 0 }}>PLACE</span>
+        <span style={{ ...styles.label, margin: 0 }}>PLACE : </span>
         <span style={{ ...styles.value, margin: 0 }}>{place}</span>
       </p>
-      <Link href={`/entries/${slug}`} style={styles.link}>
+      <Link href={`/entries/${slug}`} style={styles.link} className="hover-button">
         Explore more →
       </Link>
     </article>

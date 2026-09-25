@@ -92,6 +92,7 @@ export default function AuthStatus() {
           <span style={styles.email}>{user.email}</span>
           <button
             type="button"
+            className="hover-button"
             style={{
               ...styles.action,
               opacity: isSigningOut ? 0.5 : 1,
@@ -105,10 +106,10 @@ export default function AuthStatus() {
         </>
       ) : (
         <>
-          <Link href="/login" style={styles.action}>
+          <Link href="/login" style={styles.action} className="hover-button">
             Log in
           </Link>
-          <Link href="/signup" style={styles.action}>
+          <Link href="/signup" style={styles.action} className="hover-button">
             Sign up
           </Link>
         </>

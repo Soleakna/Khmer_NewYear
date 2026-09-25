@@ -1,19 +1,3 @@
-// ============================================================
-//  DETAIL TEXTS
-//
-//  The long-form description shown on each entry's detail page
-//  (/entries/<slug>). Keyed by the entry's `slug` — the same
-//  slugs used in data/entries.js.
-//
-//  Edit this file independently of the cards: the card blurb
-//  lives in data/entries.js (`description`), while the text
-//  below appears ONLY on the detail page.
-//
-//  Each text below is currently a copy of the card blurb.
-//  Extend them here as much as you want — the cards will
-//  not change.
-// ============================================================
-
 const details = {
   "num-ansom":
     "Sticky rice cake wrapped in banana leaf, made by families in the days before Khmer New Year. But sometimes, everyone gathers together to wrap Num Ansom before Khmer New Year , it's a community activity, not just something done alone at home.",

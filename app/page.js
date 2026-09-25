@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import collection from "../collection.config.js";
 import EntryCard from "../components/EntryCard";
 import AuthStatus from "../components/AuthStatus";
-import entries from "../data/entries.js";
+import { createClient } from "../lib/supabase/client.js";
 
 const styles = {
   wrap: {
@@ -50,13 +50,6 @@ const styles = {
     color: "rgba(245, 235, 235, 0.08)",
     margin: "6px 0 0",
   },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-    rowGap: 30,
-    columnGap: 28,
-    marginTop: 48,
-  },
   search: {
     width: "100%",
     marginTop: 48,
@@ -101,10 +94,39 @@ const styles = {
 
 export default function Home() {
   const [query, setQuery] = useState("");
+  const [entries, setEntries] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Fetch entries from Supabase once on mount. `entries === null` means the
+  // query is still in progress; `error` holds a message when the query fails.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadEntries() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("entries")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (cancelled) return;
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      setEntries(data ?? []);
+    }
+
+    loadEntries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Case-insensitive filter over title and description.
   // Empty (or whitespace-only) input keeps every entry visible.
-  const filteredEntries = entries.filter((entry) => {
+  const filteredEntries = (entries ?? []).filter((entry) => {
     const term = query.trim().toLowerCase();
     if (term === "") return true;
     return (
@@ -140,17 +162,29 @@ export default function Home() {
         onChange={(event) => setQuery(event.target.value)}
       />
 
-      {filteredEntries.length > 0 ? (
-        <div style={styles.grid}>
+      {error ? (
+        <p style={styles.noResults}>
+          Couldn't load entries from the archive: {error}
+        </p>
+      ) : entries === null ? (
+        <p style={styles.noResults}>Loading entries…</p>
+      ) : filteredEntries.length > 0 ? (
+        <div className="entry-grid">
           {filteredEntries.map((entry) => (
             <EntryCard key={entry.title} entry={entry} />
           ))}
         </div>
       ) : (
-        <p style={styles.noResults}>No results for "{query}".</p>
+        <p style={styles.noResults}>
+          {entries.length === 0
+            ? "No entries in the archive yet. Come back soon."
+            : `No results for "{query}".`}
+        </p>
       )}
 
-      <p style={styles.count}>entries in the archive: {entries.length}</p>
+      {entries && (
+        <p style={styles.count}>entries in the archive: {entries.length}</p>
+      )}
 
       <footer style={styles.footer}>
         Built in ICT 340 — Vibe Coding, American University of Phnom Penh, Fall
