@@ -103,18 +103,49 @@ export default function Home() {
     let cancelled = false;
 
     async function loadEntries() {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("entries")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("entries")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-      if (cancelled) return;
-      if (error) {
-        setError(error.message);
-        return;
+        if (cancelled) return;
+        if (error) {
+          // RLS / permission problems and bad queries land here. Logging the
+          // raw message makes the real cause visible in the browser console
+          // (DevTools) instead of only as a friendly line in the page.
+          console.error("Supabase query failed:", error.message);
+          // PostgREST only exposes tables the role can see, so "could not
+          // find the table 'public.entries'" means the build's env vars point
+          // at a Supabase project that has no entries table for that key.
+          const hint = /could not find the table\s*'?public\.entries'?/i.test(
+            error.message
+          )
+            ? " The Supabase project this build connects to has no public.entries table. Check that Vercel's NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY match the ones in .env.local, and that the migrations in supabase/migrations/ were run in that project."
+            : /permission denied for table entries/i.test(error.message)
+              ? " The anon role cannot read the entries table — run supabase/migrations/20260926120000_allow_public_read_entries.sql in that project."
+              : "";
+          setError(error.message + hint);
+          return;
+        }
+        setEntries(data ?? []);
+      } catch (err) {
+        // createClient() throws when the Supabase URL/key are missing, which
+        // happens when a build was compiled without the NEXT_PUBLIC_* env
+        // vars (e.g. after a fresh Vercel deploy). Without this guard the
+        // page would sit on "Loading entries…" forever.
+        console.error("Couldn't create the Supabase client:", err.message ?? err);
+        if (cancelled) return;
+        const isMissingConfig =
+          !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+          !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+        setError(
+          isMissingConfig
+            ? "Supabase isn't configured for this build. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to your Vercel project's environment variables, then redeploy."
+            : err.message ?? "Couldn't load entries from the archive."
+        );
       }
-      setEntries(data ?? []);
     }
 
     loadEntries();
