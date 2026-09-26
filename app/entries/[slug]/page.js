@@ -1,6 +1,7 @@
 import Link from "next/link";
 // import entries from "../../../data/entries.js";
 import details from "../../../data/details.js";
+import { createStaticClient } from "../../../lib/supabase/server.js";
 
 const styles = {
   wrap: {
@@ -67,13 +68,60 @@ const styles = {
 };
 
 // Pre-render one detail page per entry: /entries/num-ansom, /entries/khor, ...
-export function generateStaticParams() {
-  return entries.map((entry) => ({ slug: entry.slug }));
+// The old local `data/entries.js` is gone — entries now live in the Supabase
+// `entries` table — so load the slugs from there. On any Supabase failure we
+// return [] so the build still succeeds and routes render on demand.
+export async function generateStaticParams() {
+  try {
+    // Build-time: no request/cookies here, so use the cookie-less server
+    // client (the normal server client would throw "cookies called outside
+    // a request scope" during `next build`).
+    const supabase = createStaticClient();
+    const { data, error } = await supabase.from("entries").select("slug");
+
+    if (error) {
+      console.error(
+        "generateStaticParams: could not read entries:",
+        error.message
+      );
+      return [];
+    }
+
+    return (data ?? []).map((entry) => ({ slug: entry.slug }));
+  } catch (err) {
+    console.error(
+      "generateStaticParams: failed to load entry slugs:",
+      err.message ?? err
+    );
+    return [];
+  }
 }
 
 export default async function EntryDetail({ params }) {
   const { slug } = await params;
-  const entry = entries.find((item) => item.slug === slug);
+
+  // Entries live in the Supabase `entries` table; look this slug up there.
+  // The page is public and statically pre-rendered, so it reads through the
+  // cookie-less client — no viewer session is involved (and cookies() would
+  // abort static generation at `next build`). A missing/erroneous entry
+  // simply falls through to the message below.
+  let entry = null;
+  try {
+    const supabase = createStaticClient();
+    const { data, error } = await supabase
+      .from("entries")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) {
+      console.error("EntryDetail: could not read entry:", error.message);
+    } else {
+      entry = data;
+    }
+  } catch (err) {
+    console.error("EntryDetail: failed to load entry:", err.message ?? err);
+  }
 
   if (!entry) {
     return (
