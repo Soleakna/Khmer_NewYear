@@ -1,6 +1,7 @@
 import Link from "next/link";
 // import entries from "../../../data/entries.js";
 import details from "../../../data/details.js";
+import EntryOwnerActions from "../../../components/EntryOwnerActions";
 import { createStaticClient } from "../../../lib/supabase/server.js";
 
 const styles = {
@@ -161,6 +162,10 @@ export default async function EntryDetail({ params }) {
         <span style={styles.label}>PLACE: </span>
         <span style={styles.value}>{entry.place}</span>
       </p>
+      {/* Edit/Delete appear only for the signed-in owner (EntryOwnerActions
+          checks the session client-side). RLS remains the real enforcement
+          boundary for the UPDATE/DELETE. */}
+      <EntryOwnerActions slug={entry.slug} owner={entry.owner} />
       <Link href="/" style={styles.back} className="hover-button">
         ← Back to home
       </Link>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EntryOwnerActions from "./EntryOwnerActions";
 
 // Expects an "entry" prop shaped { title, description, contributor, place,
 // photo|image, slug }. The photo may come from either column: old entries
@@ -61,8 +62,6 @@ const styles = {
     marginBottom: 16,
   },
   link: {
-    alignSelf: "flex-start",
-    marginTop: 16,
     padding: "10px 14px",
     backgroundColor: "#CA2A02",
     border: "1px solid #972002",
@@ -71,6 +70,16 @@ const styles = {
     textDecoration: "none",
     fontSize: 15,
     fontWeight: 600,
+  },
+  // Bottom row of the card: "Explore more" on the left, the owner-only
+  // Edit/Delete actions on the right.
+  footer: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 16,
   },
 };
 
@@ -95,9 +104,24 @@ export default function EntryCard({ entry }) {
         <span style={{ ...styles.label, margin: 0 }}>PLACE : </span>
         <span style={{ ...styles.value, margin: 0 }}>{place}</span>
       </p>
-      <Link href={`/entries/${slug}`} style={styles.link} className="hover-button">
-        Explore more →
-      </Link>
+      <div style={styles.footer}>
+        <Link
+          href={`/entries/${slug}`}
+          style={styles.link}
+          className="hover-button"
+        >
+          Explore more →
+        </Link>
+        {/* Same owner-gated component as the detail page: only the owner
+            sees Edit/Delete. A successful delete reloads the archive so the
+            removed card disappears immediately. */}
+        <EntryOwnerActions
+          slug={slug}
+          owner={entry.owner}
+          compact
+          onDeleted={() => window.location.reload()}
+        />
+      </div>
     </article>
   );
 }
