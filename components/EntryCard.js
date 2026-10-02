@@ -1,7 +1,10 @@
 import Link from "next/link";
 
-// Expects an "entry" prop shaped { title, description, contributor, place, slug },
-// all four strings. Missing fields render silently as blanks, so callers must pass all four.
+// Expects an "entry" prop shaped { title, description, contributor, place,
+// photo|image, slug }. The photo may come from either column: old entries
+// store their picture in `image` (full URL or repository path such as
+// /photos/x.jpg) while new contributions store a Supabase Storage URL in
+// `photo`. Both render through <img src> as-is — never re-prefixed.
 const styles = {
   card: {
     display: "flex",
@@ -72,11 +75,16 @@ const styles = {
 };
 
 export default function EntryCard({ entry }) {
-  const { title, description, contributor, place, image, slug } = entry;
+  const { title, description, contributor, place, photo, image, slug } = entry;
+  // Old entries store the picture in `image`; new contributions store a
+  // Supabase Storage URL in `photo`. Both are full URLs/paths, so render
+  // whichever exists directly — never rebuild the path with a "/photos/"
+  // prefix, which would break entries whose photo is already a complete URL.
+  const photoSrc = photo || image;
 
   return (
     <article style={styles.card} className="hover-card">
-      {image && <img src={image} alt={title} style={styles.image} />}
+      {photoSrc && <img src={photoSrc} alt={title} style={styles.image} />}
       <h2 style={styles.title}>{title}</h2>
       <p style={styles.description}>{description}</p>
       <p style={styles.row}>

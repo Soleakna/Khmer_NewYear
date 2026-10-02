@@ -140,10 +140,16 @@ export default async function EntryDetail({ params }) {
   // is missing there, fall back to the card blurb (entry.description).
   const text = details[slug] || entry.description;
 
+  // Old entries store the picture in `image` (full URL or repository path);
+  // new contributions store a Supabase Storage URL in `photo`. Both are full
+  // URLs/paths, so render whichever exists directly — never rebuild the path
+  // with a "/photos/" prefix, which would break new-style photo URLs.
+  const photoSrc = entry.photo || entry.image;
+
   return (
     <main style={styles.wrap}>
-      {entry.image && (
-        <img src={entry.image} alt={entry.title} style={styles.image} />
+      {photoSrc && (
+        <img src={photoSrc} alt={entry.title} style={styles.image} />
       )}
       <h1 style={styles.title}>{entry.title}</h1>
       <p style={styles.text}>{text}</p>
