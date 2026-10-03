@@ -1,5 +1,6 @@
 import collection from "../collection.config.js";
 import "./search.css";
+import Navbar from "../components/Navbar";
 
 export const metadata = {
   title: `${collection.name} — Khmer Living Archive`,
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
           minHeight: "100vh",
         }}
       >
+        <Navbar />
         {children}
       </body>
     </html>
