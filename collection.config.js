@@ -17,7 +17,8 @@ const collection = {
   curator: "Soleakna",
 
   // Where does your knowledge come from? A person, a place, a community.
-  source: "To be gathered",
+  source:
+    "My family and the community of Kbal Trach village, Kratie province, Cambodia",
 };
 
 export default collection;

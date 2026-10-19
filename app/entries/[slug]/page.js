@@ -1,6 +1,5 @@
 import Link from "next/link";
 // import entries from "../../../data/entries.js";
-import details from "../../../data/details.js";
 import EntryOwnerActions from "../../../components/EntryOwnerActions";
 import { createStaticClient } from "../../../lib/supabase/server.js";
 
@@ -139,8 +138,7 @@ export default async function EntryDetail({ params }) {
 
   // Long-form text lives in data/details.js, keyed by slug. If a slug
   // is missing there, fall back to the card blurb (entry.description).
-  const text = details[slug] || entry.description;
-
+  const text = entry.description;
   // Old entries store the picture in `image` (full URL or repository path);
   // new contributions store a Supabase Storage URL in `photo`. Both are full
   // URLs/paths, so render whichever exists directly — never rebuild the path

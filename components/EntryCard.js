@@ -1,6 +1,54 @@
 import Link from "next/link";
 import EntryOwnerActions from "./EntryOwnerActions";
 
+// Word-boundary rules for the card's description limit.
+//
+// Khmer is usually written without spaces between words, so counting "words"
+// with split(/\s+/) would treat a whole Khmer sentence as one word and a long
+// Khmer description would never be cut. Intl.Segmenter applies the Unicode
+// word-boundary algorithm (UAX #29); for Khmer text the engine uses its
+// built-in Khmer dictionary and for English it breaks on spaces — one code
+// path handles both scripts. Older browsers/Node without Intl.Segmenter fall
+// back to whitespace splitting (still correct for English).
+let wordSegmenter = null;
+if (typeof Intl !== "undefined" && typeof Intl.Segmenter === "function") {
+  wordSegmenter = new Intl.Segmenter("km", { granularity: "word" });
+}
+
+// Words in `text`. With Intl.Segmenter each item keeps its { segment, index,
+// isWordLike } shape (needed to rebuild the truncated string); the older
+// fallback yields plain strings.
+function splitWords(text) {
+  if (wordSegmenter) {
+    return [...wordSegmenter.segment(text)].filter((s) => s.isWordLike);
+  }
+  return text.split(/\s+/).filter(Boolean);
+}
+
+// Card display helper: keep only the first `maxWords` words of a description.
+// The full text is preserved in Supabase and on the detail page; only the card
+// is shortened. "..." is appended only when the text was actually cut. The
+// `!text` guard mirrors the old `{description}` render for rows whose
+// description column is NULL (the schema allows it) instead of crashing.
+function truncateWords(text, maxWords = 35) {
+  if (!text) return text;
+
+  const words = splitWords(text);
+
+  if (words.length <= maxWords) {
+    return text;
+  }
+
+  if (wordSegmenter) {
+    // Cut the original text just past the last kept word so the card keeps
+    // the author's exact spacing and punctuation, then append "...".
+    const last = words[maxWords - 1];
+    return text.slice(0, last.index + last.segment.length).trimEnd() + "...";
+  }
+
+  return words.slice(0, maxWords).join(" ") + "...";
+}
+
 // Expects an "entry" prop shaped { title, description, contributor, place,
 // photo|image, slug }. The photo may come from either column: old entries
 // store their picture in `image` (full URL or repository path such as
@@ -95,7 +143,7 @@ export default function EntryCard({ entry }) {
     <article style={styles.card} className="hover-card">
       {photoSrc && <img src={photoSrc} alt={title} style={styles.image} />}
       <h2 style={styles.title}>{title}</h2>
-      <p style={styles.description}>{description}</p>
+      <p style={styles.description}>{truncateWords(description, 35)}</p>
       <p style={styles.row}>
         <span style={{ ...styles.label, margin: 0 }}>CONTRIBUTED BY : </span>
         <span style={{ ...styles.value, margin: 0 }}>{contributor}</span>

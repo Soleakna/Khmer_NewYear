@@ -28,25 +28,25 @@ const styles = {
     lineHeight: 1.5,
     margin: 0,
   },
-  // card: {
-  //   marginTop: 48,
-  //   padding: 24,
-  //   backgroundColor: "rgba(255, 255, 255, 0.08)",
-  //   border: "1px solid rgba(255, 255, 255, 0.18)",
-  //   borderRadius: 10,
-  //   backdropFilter: "blur(12px)",
-  //   WebkitBackdropFilter: "blur(12px)",
-  //   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
-  // },
+  card: {
+    marginTop: 48,
+    padding: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    borderRadius: 10,
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
+  },
   cardLabel: {
     fontFamily: "'Courier New', monospace",
     fontSize: 12,
-    color: "#fffff",
+    color: "#ffffff",
     margin: 0,
   },
   cardValue: {
     fontSize: 16,
-    color: "rgba(245, 235, 235, 0.08)",
+    color: "#ffffff",
     margin: "6px 0 0",
   },
   search: {
@@ -82,19 +82,73 @@ const styles = {
     color: "#ffffff",
     marginTop: 48,
   },
-  footer: {
-    marginTop: 64,
-    paddingTop: 24,
-    borderTop: "1px solid #2E3644",
-    fontSize: 13,
-    color: "#cbd7ec",
+  // Pagination controls under the card grid.
+  pager: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 32,
+  },
+  pageButton: {
+    padding: "8px 14px",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    borderRadius: 8,
+    color: "#ffffff",
+    fontSize: 15,
+    fontFamily: "inherit",
+    cursor: "pointer",
+  },
+  pageButtonActive: {
+    backgroundColor: "#CA2A02",
+    border: "1px solid #972002",
+    fontWeight: 600,
   },
 };
+
+// The entry grid shows 6 cards per page. Pagination happens on the client,
+// over the already-filtered list, so search and paging never fight. The
+// Supabase query still fetches the whole archive once (see the effect below).
+const ITEMS_PER_PAGE = 6;
+
+// Typing speed for the hero title: ~120 ms per character, a smooth
+// human typing pace (the brief was 100–150 ms per character).
+const TYPE_DELAY_MS = 120;
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState(null);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Typewriter title --------------------------------------------------
+  // `titleChars` counts how many characters of the archive name are
+  // visible. The effect below advances it one per TYPE_DELAY_MS until
+  // the whole title is on screen, then stops. Starts at 1 so the first
+  // letter is already visible on the very first paint (0 would leave the
+  // h1 looking empty for one frame).
+  const [titleChars, setTitleChars] = useState(1);
+
+  useEffect(() => {
+    // Respect users who prefer reduced motion (see the matching media
+    // query in app/search.css): show the complete title immediately
+    // instead of typing it out.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTitleChars(collection.name.length);
+      return;
+    }
+
+    // Whole title is on screen — stop scheduling new characters.
+    if (titleChars >= collection.name.length) return;
+
+    const timer = window.setTimeout(
+      () => setTitleChars(titleChars + 1),
+      TYPE_DELAY_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [titleChars]);
 
   // Fetch entries from Supabase once on mount. `entries === null` means the
   // query is still in progress; `error` holds a message when the query fails.
@@ -165,20 +219,49 @@ export default function Home() {
     );
   });
 
+  // Client-side pagination over the *filtered* list: 6 cards per page.
+  // totalPages is derived from the filtered length, and safePage clamps the
+  // current page so a search that narrows the results can never leave us
+  // sitting on a page that no longer exists.
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredEntries.length / ITEMS_PER_PAGE)
+  );
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedEntries = filteredEntries.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
   return (
     <main style={styles.wrap}>
       <p style={styles.kicker}>KHMER LIVING ARCHIVE</p>
-      <h1 style={styles.title}>{collection.name}</h1>
+      {/* Typewriter title. Unrevealed characters stay in the layout with
+          `visibility: hidden` (not display: none), so the h1 keeps its full
+          final size from the first frame and the hero never reflows or
+          jumps while the title types itself out. aria-label lets screen
+          readers announce the whole title at once. */}
+      <h1 style={styles.title} aria-label={collection.name}>
+        {collection.name.split("").map((char, index) => (
+          <span
+            key={index}
+            style={index < titleChars ? undefined : { visibility: "hidden" }}
+          >
+            {char}
+          </span>
+        ))}
+      </h1>
       <p style={styles.description}>{collection.description}</p>
 
-      {/* <div style={styles.card}>
+      <div style={styles.card}>
         <p style={styles.cardLabel}>CURATED BY</p>
         <p style={styles.cardValue}>{collection.curator}</p>
       </div>
       <div style={styles.card}>
         <p style={styles.cardLabel}>SOURCE</p>
         <p style={styles.cardValue}>{collection.source}</p>
-      </div> */}
+      </div>
 
       <input
         type="search"
@@ -187,7 +270,10 @@ export default function Home() {
         placeholder="Search by title or description…"
         aria-label="Search entries"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setCurrentPage(1); // a new search always starts back at page 1
+        }}
       />
 
       {error ? (
@@ -197,11 +283,62 @@ export default function Home() {
       ) : entries === null ? (
         <p style={styles.noResults}>Loading entries…</p>
       ) : filteredEntries.length > 0 ? (
-        <div className="entry-grid">
-          {filteredEntries.map((entry) => (
-            <EntryCard key={entry.title} entry={entry} />
-          ))}
-        </div>
+        <>
+          <div className="entry-grid">
+            {paginatedEntries.map((entry) => (
+              <EntryCard key={entry.title} entry={entry} />
+            ))}
+          </div>
+
+          {/* Pagination shows only when there is more than one page. */}
+          {filteredEntries.length > ITEMS_PER_PAGE && (
+            <div style={styles.pager} role="navigation" aria-label="Pagination">
+              <button
+                type="button"
+                style={{
+                  ...styles.pageButton,
+                  opacity: safePage === 1 ? 0.4 : 1,
+                  cursor: safePage === 1 ? "default" : "pointer",
+                }}
+                disabled={safePage === 1}
+                onClick={() => setCurrentPage(safePage - 1)}
+              >
+                Previous
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    style={
+                      page === safePage
+                        ? { ...styles.pageButton, ...styles.pageButtonActive }
+                        : styles.pageButton
+                    }
+                    aria-current={page === safePage ? "page" : undefined}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                style={{
+                  ...styles.pageButton,
+                  opacity: safePage === totalPages ? 0.4 : 1,
+                  cursor: safePage === totalPages ? "default" : "pointer",
+                }}
+                disabled={safePage === totalPages}
+                onClick={() => setCurrentPage(safePage + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <p style={styles.noResults}>
           {entries.length === 0
@@ -213,12 +350,6 @@ export default function Home() {
       {entries && (
         <p style={styles.count}>entries in the archive: {entries.length}</p>
       )}
-
-      <footer style={styles.footer}>
-        Built in ICT 340 — Vibe Coding, American University of Phnom Penh, Fall
-        2026. This archive is under construction all semester. Come back in
-        December.
-      </footer>
     </main>
   );
 }

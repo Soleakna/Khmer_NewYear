@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase/client.js";
@@ -10,6 +10,10 @@ import { createClient } from "../lib/supabase/client.js";
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const ALLOWED_PHOTO_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+// An image URL must be a direct http(s) link. The real check is loading it
+// with a temporary Image in the browser (see handlePhotoUrlChange) — this
+// pattern only rejects obvious nonsense early.
+const URL_PATTERN = /^https?:\/\/[^\s]+$/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 // Same courtesy limits as /contribute. The entries table's text columns have
@@ -125,6 +129,35 @@ const styles = {
     borderRadius: 8,
     marginBottom: 8,
   },
+  preview: {
+    display: "block",
+    width: "100%",
+    maxHeight: 240,
+    objectFit: "cover",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  photoOptions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    margin: "0 0 10px",
+  },
+  optionButton: {
+    padding: "6px 10px",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    borderRadius: 8,
+    color: "#ffffff",
+    fontSize: 13,
+    fontFamily: "inherit",
+    cursor: "pointer",
+  },
+  optionButtonActive: {
+    backgroundColor: "#CA2A02",
+    border: "1px solid #972002",
+    fontWeight: 600,
+  },
   message: {
     marginTop: 20,
     fontSize: 16,
@@ -200,10 +233,22 @@ export default function EntryEditForm({ entry }) {
     contributor: entry.contributor ?? "",
     place: entry.place ?? "",
   }));
+  // Photo input: either a local file or a pasted image URL. `filePreview` is
+  // a temporary blob: URL for the selected file; `urlPreview` mirrors the URL
+  // once it has actually loaded (urlStatus === "ok").
+  const [photoSource, setPhotoSource] = useState("file"); // "file" | "url"
   const [photo, setPhoto] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [urlStatus, setUrlStatus] = useState("idle"); // idle|loading|ok|error
+  const [urlPreview, setUrlPreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Guards the async image check: only the newest URL's callbacks may update
+  // urlStatus/urlPreview, so a slower older request cannot overwrite a newer
+  // one while the user keeps typing.
+  const urlCheckIdRef = useRef(0);
 
   // Old entries store the picture in `image`; new entries store a Supabase
   // Storage URL in `photo`. Show whichever exists without rebuilding paths.
@@ -247,6 +292,9 @@ export default function EntryEditForm({ entry }) {
   function handlePhotoChange(event) {
     const file = event.target.files && event.target.files[0];
     setPhoto(file);
+    // Preview the chosen file immediately with a temporary object URL.
+    if (filePreview) URL.revokeObjectURL(filePreview);
+    setFilePreview(file ? URL.createObjectURL(file) : null);
     if (errors.photo) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -256,9 +304,55 @@ export default function EntryEditForm({ entry }) {
     }
   }
 
+  // Switching between "upload a file" and "paste an image URL" keeps the
+  // preview of whichever source is now active (nothing is lost).
+  function switchPhotoSource(source) {
+    setPhotoSource(source);
+    if (errors.photo) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.photo;
+        return next;
+      });
+    }
+  }
+
+  // Try to load the pasted URL as an image. onload -> the link works and the
+  // preview shows; onerror -> the link is broken or is not an image, so the
+  // form shows a clear error and keeps the existing photo.
+  function handlePhotoUrlChange(event) {
+    const url = event.target.value.trim();
+    setPhotoUrl(url);
+    const checkId = ++urlCheckIdRef.current;
+
+    if (url === "") {
+      setUrlStatus("idle");
+      setUrlPreview(null);
+      return;
+    }
+
+    setUrlStatus("loading");
+    setUrlPreview(null);
+
+    const img = new window.Image();
+    img.onload = () => {
+      if (urlCheckIdRef.current !== checkId) return; // a newer URL superseded this one
+      setUrlStatus("ok");
+      setUrlPreview(url);
+    };
+    img.onerror = () => {
+      if (urlCheckIdRef.current !== checkId) return;
+      setUrlStatus("error");
+    };
+    img.src = url;
+  }
+
   // Same required-field and length rules as /contribute. Unlike contribute,
-  // the photo is optional here: no file means "keep the existing photo".
-  function validate(values, photoFile) {
+  // the photo is optional here: no file/URL means "keep the existing photo".
+  // `photoState` bundles everything the photo field needs to validate itself:
+  // which source is active, the picked file, the pasted URL, and the result
+  // of the browser's live image check (urlStatus).
+  function validate(values, photoState) {
     const next = {};
 
     if (values.title === "") {
@@ -294,14 +388,30 @@ export default function EntryEditForm({ entry }) {
       next.place = `Place must be ${LIMITS.place} characters or fewer.`;
     }
 
-    if (photoFile) {
-      if (
-        !ALLOWED_PHOTO_TYPES.includes(photoFile.type) ||
-        !ALLOWED_PHOTO_EXTENSIONS.includes(photoExtension(photoFile.name))
-      ) {
-        next.photo = "Photo must be JPG, PNG, or WebP.";
-      } else if (photoFile.size > MAX_PHOTO_BYTES) {
-        next.photo = "Photo must be 5 MB or smaller.";
+    if (photoState.source === "url") {
+      const url = (photoState.url || "").trim();
+      if (url !== "") {
+        if (!URL_PATTERN.test(url)) {
+          next.photo = "Please enter a valid image URL (http:// or https://).";
+        } else if (photoState.urlStatus === "error") {
+          next.photo =
+            "That image link doesn't work. Check the URL and try again.";
+        } else if (photoState.urlStatus === "loading") {
+          next.photo =
+            "The image preview is still loading. Wait a moment, then save again.";
+        }
+      }
+    } else {
+      const photoFile = photoState.file;
+      if (photoFile) {
+        if (
+          !ALLOWED_PHOTO_TYPES.includes(photoFile.type) ||
+          !ALLOWED_PHOTO_EXTENSIONS.includes(photoExtension(photoFile.name))
+        ) {
+          next.photo = "Photo must be JPG, PNG, or WebP.";
+        } else if (photoFile.size > MAX_PHOTO_BYTES) {
+          next.photo = "Photo must be 5 MB or smaller.";
+        }
       }
     }
 
@@ -321,7 +431,12 @@ export default function EntryEditForm({ entry }) {
       place: form.place.trim(),
     };
 
-    const nextErrors = validate(values, photo);
+    const nextErrors = validate(values, {
+      source: photoSource,
+      file: photo,
+      url: photoUrl,
+      urlStatus,
+    });
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -348,10 +463,15 @@ export default function EntryEditForm({ entry }) {
       let storagePath = null;
       let newPhotoUrl = null;
 
-      // Optional photo: upload only when the user picked a new file. Same
-      // OWASP rules as /contribute — the storage path is
-      // <user id>/<random uuid>.<ext> and the original filename is never used.
-      if (photo) {
+      // Optional photo. A pasted URL replaces the photo directly (the photo
+      // column is plain text rendered by <img src> everywhere). A picked file
+      // follows the existing upload flow. Nothing chosen -> keep the current
+      // photo (newPhotoUrl stays null, so the column is left untouched).
+      if (photoSource === "url" && urlStatus === "ok" && photoUrl.trim() !== "") {
+        newPhotoUrl = photoUrl.trim();
+      } else if (photoSource === "file" && photo) {
+        // Same OWASP rules as /contribute — the storage path is
+        // <user id>/<random uuid>.<ext> and the original filename is never used.
         const ext = photoExtension(photo.name);
         storagePath = `${sessionUser.id}/${crypto.randomUUID()}.${ext}`;
 
@@ -458,6 +578,9 @@ export default function EntryEditForm({ entry }) {
       setIsSubmitting(false);
     }
   }
+
+  // Which preview to show depends on the active source.
+  const preview = photoSource === "file" ? filePreview : urlPreview;
 
   if (authLoading) {
     return <p style={styles.message}>Checking your session…</p>;
@@ -567,7 +690,12 @@ export default function EntryEditForm({ entry }) {
         />
 
         <div style={{ margin: "4px 0" }}>
-          <label style={styles.label} htmlFor="edit-photo">
+          <label
+            style={styles.label}
+            htmlFor={
+              photoSource === "file" ? "edit-photo" : "edit-photo-url"
+            }
+          >
             PHOTO <span style={styles.optional}>OPTIONAL</span>
           </label>
           {currentPhoto && (
@@ -577,22 +705,80 @@ export default function EntryEditForm({ entry }) {
               style={styles.currentPhoto}
             />
           )}
-          <input
-            id="edit-photo"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            style={styles.fileInput}
-            disabled={isSubmitting}
-            onChange={handlePhotoChange}
-          />
+
+          <div
+            style={styles.photoOptions}
+            role="group"
+            aria-label="Photo source"
+          >
+            <button
+              type="button"
+              style={
+                photoSource === "file"
+                  ? { ...styles.optionButton, ...styles.optionButtonActive }
+                  : styles.optionButton
+              }
+              aria-pressed={photoSource === "file"}
+              disabled={isSubmitting}
+              onClick={() => switchPhotoSource("file")}
+            >
+              Upload a file
+            </button>
+            <button
+              type="button"
+              style={
+                photoSource === "url"
+                  ? { ...styles.optionButton, ...styles.optionButtonActive }
+                  : styles.optionButton
+              }
+              aria-pressed={photoSource === "url"}
+              disabled={isSubmitting}
+              onClick={() => switchPhotoSource("url")}
+            >
+              Paste an image link
+            </button>
+          </div>
+
+          {preview && (
+            <img src={preview} alt="New photo preview" style={styles.preview} />
+          )}
+
+          {photoSource === "file" ? (
+            <input
+              id="edit-photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={styles.fileInput}
+              disabled={isSubmitting}
+              onChange={handlePhotoChange}
+            />
+          ) : (
+            <input
+              id="edit-photo-url"
+              type="url"
+              placeholder="https://example.com/photo.jpg"
+              style={styles.input}
+              value={photoUrl}
+              disabled={isSubmitting}
+              onChange={handlePhotoUrlChange}
+              aria-invalid={Boolean(errors.photo)}
+            />
+          )}
+
           {errors.photo ? (
             <p style={styles.fieldError} role="alert">
               {errors.photo}
             </p>
-          ) : (
+          ) : photoSource === "file" ? (
             <p style={styles.hint}>
               Leave empty to keep the current photo. JPG, PNG, or WebP, 5 MB
               or smaller.
+            </p>
+          ) : (
+            <p style={styles.hint}>
+              Paste a direct link to an image (https://…) to replace the
+              current photo. Leave empty to keep it. The link is checked
+              before you save.
             </p>
           )}
         </div>

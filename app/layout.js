@@ -1,6 +1,7 @@
 import collection from "../collection.config.js";
 import "./search.css";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export const metadata = {
   title: `${collection.name} — Khmer Living Archive`,
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
       >
         <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );

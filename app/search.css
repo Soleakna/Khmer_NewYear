@@ -64,3 +64,17 @@ input.search-input:focus {
     grid-template-columns: repeat(1, 1fr);
   }
 }
+/* Footer quick links (components/Footer.js): the underline is drawn with
+   text-decoration but its color is TRANSPARENT by default, so no underline
+   is ever visible until hover fades it to white. Smooth, hover-only. */
+.footer-link {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 180ms ease;
+}
+
+.footer-link:hover {
+  text-decoration-color: #ffffff;
+}

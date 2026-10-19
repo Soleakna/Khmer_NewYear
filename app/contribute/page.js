@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client.js";
@@ -10,6 +10,10 @@ import { createClient } from "../../lib/supabase/client.js";
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const ALLOWED_PHOTO_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+// An image URL must be a direct http(s) link. The real check is loading it
+// with a temporary Image in the browser (see handlePhotoUrlChange) — this
+// pattern only rejects obvious nonsense early.
+const URL_PATTERN = /^https?:\/\/[^\s]+$/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 // The entries table's text columns have no length limit, so these limits are
@@ -75,6 +79,7 @@ const styles = {
     color: "#ffffff",
     fontSize: 16,
     fontFamily: "inherit",
+    outline: "none", // removes the browser's default black focus outline (the white/light border is the only focus border)
   },
   textarea: {
     width: "100%",
@@ -89,6 +94,7 @@ const styles = {
     fontFamily: "inherit",
     resize: "vertical",
     minHeight: 96,
+    outline: "none", // removes the browser's default black focus outline (the white/light border is the only focus border)
   },
   fileInput: {
     width: "100%",
@@ -101,6 +107,37 @@ const styles = {
     color: "#ffffff",
     fontSize: 14,
     fontFamily: "inherit",
+    outline: "none", // removes the browser's default black focus outline (the white/light border is the only focus border)
+  },
+  preview: {
+    display: "block",
+    width: "100%",
+    maxHeight: 240,
+    objectFit: "cover",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  photoOptions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    margin: "0 0 10px",
+  },
+  optionButton: {
+    padding: "6px 10px",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    borderRadius: 8,
+    color: "#ffffff",
+    fontSize: 13,
+    fontFamily: "inherit",
+    cursor: "pointer",
+    outline: "none",
+  },
+  optionButtonActive: {
+    backgroundColor: "#CA2A02",
+    border: "1px solid #972002",
+    fontWeight: 600,
   },
   fieldError: {
     margin: "0 0 12px",
@@ -132,6 +169,7 @@ const styles = {
     fontSize: 16,
     fontFamily: "inherit",
     fontWeight: 600,
+    outline: "none", // removes the browser's default black focus outline (the button border is the only focus border)
   },
   message: {
     marginTop: 20,
@@ -207,10 +245,22 @@ export default function ContributePage() {
     contributor: "",
     place: "",
   });
+  // Photo input: either a local file or a pasted image URL. `filePreview` is
+  // a temporary blob: URL for the selected file; `urlPreview` mirrors the URL
+  // once it has actually loaded (urlStatus === "ok").
+  const [photoSource, setPhotoSource] = useState("file"); // "file" | "url"
   const [photo, setPhoto] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [urlStatus, setUrlStatus] = useState("idle"); // idle|loading|ok|error
+  const [urlPreview, setUrlPreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Guards the async image check: only the newest URL's callbacks may update
+  // urlStatus/urlPreview, so a slower older request cannot overwrite a newer
+  // one while the user keeps typing.
+  const urlCheckIdRef = useRef(0);
 
   // Ask Supabase who the current session belongs to. The form is only shown
   // to a signed-in user; hiding it is a courtesy, not a security boundary
@@ -250,6 +300,9 @@ export default function ContributePage() {
   function handlePhotoChange(event) {
     const file = event.target.files && event.target.files[0];
     setPhoto(file);
+    // Preview the chosen file immediately with a temporary object URL.
+    if (filePreview) URL.revokeObjectURL(filePreview);
+    setFilePreview(file ? URL.createObjectURL(file) : null);
     if (errors.photo) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -259,8 +312,54 @@ export default function ContributePage() {
     }
   }
 
+  // Switching between "upload a file" and "paste an image URL" keeps the
+  // preview of whichever source is now active (nothing is lost).
+  function switchPhotoSource(source) {
+    setPhotoSource(source);
+    if (errors.photo) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.photo;
+        return next;
+      });
+    }
+  }
+
+  // Try to load the pasted URL as an image. onload -> the link works and the
+  // preview shows; onerror -> the link is broken or is not an image, so the
+  // form shows a clear error and blocks submission.
+  function handlePhotoUrlChange(event) {
+    const url = event.target.value.trim();
+    setPhotoUrl(url);
+    const checkId = ++urlCheckIdRef.current;
+
+    if (url === "") {
+      setUrlStatus("idle");
+      setUrlPreview(null);
+      return;
+    }
+
+    setUrlStatus("loading");
+    setUrlPreview(null);
+
+    const img = new window.Image();
+    img.onload = () => {
+      if (urlCheckIdRef.current !== checkId) return; // a newer URL superseded this one
+      setUrlStatus("ok");
+      setUrlPreview(url);
+    };
+    img.onerror = () => {
+      if (urlCheckIdRef.current !== checkId) return;
+      setUrlStatus("error");
+    };
+    img.src = url;
+  }
+
   // All values arrive already trimmed. Returns a map of field -> message.
-  function validate(values, photoFile) {
+  // `photoState` bundles everything the photo field needs to validate itself:
+  // which source is active, the picked file, the pasted URL, and the result of
+  // the browser's live image check (urlStatus).
+  function validate(values, photoState) {
     const next = {};
 
     if (values.title === "") {
@@ -296,15 +395,31 @@ export default function ContributePage() {
       next.place = `Place must be ${LIMITS.place} characters or fewer.`;
     }
 
-    if (!photoFile) {
-      next.photo = "Please select a photo.";
-    } else if (
-      !ALLOWED_PHOTO_TYPES.includes(photoFile.type) ||
-      !ALLOWED_PHOTO_EXTENSIONS.includes(photoExtension(photoFile.name))
-    ) {
-      next.photo = "Photo must be JPG, PNG, or WebP.";
-    } else if (photoFile.size > MAX_PHOTO_BYTES) {
-      next.photo = "Photo must be 5 MB or smaller.";
+    if (photoState.source === "url") {
+      const url = (photoState.url || "").trim();
+      if (url === "") {
+        next.photo = "Please add a photo — upload a file or paste an image URL.";
+      } else if (!URL_PATTERN.test(url)) {
+        next.photo = "Please enter a valid image URL (http:// or https://).";
+      } else if (photoState.urlStatus === "error") {
+        next.photo =
+          "That image link doesn't work. Check the URL and try again.";
+      } else if (photoState.urlStatus === "loading") {
+        next.photo =
+          "The image preview is still loading. Wait a moment, then submit again.";
+      }
+    } else {
+      const photoFile = photoState.file;
+      if (!photoFile) {
+        next.photo = "Please select a photo.";
+      } else if (
+        !ALLOWED_PHOTO_TYPES.includes(photoFile.type) ||
+        !ALLOWED_PHOTO_EXTENSIONS.includes(photoExtension(photoFile.name))
+      ) {
+        next.photo = "Photo must be JPG, PNG, or WebP.";
+      } else if (photoFile.size > MAX_PHOTO_BYTES) {
+        next.photo = "Photo must be 5 MB or smaller.";
+      }
     }
 
     return next;
@@ -323,7 +438,12 @@ export default function ContributePage() {
       place: form.place.trim(),
     };
 
-    const nextErrors = validate(values, photo);
+    const nextErrors = validate(values, {
+      source: photoSource,
+      file: photo,
+      url: photoUrl,
+      urlStatus,
+    });
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -364,30 +484,42 @@ export default function ContributePage() {
         return;
       }
 
-      // OWASP file upload guidance: never trust the original filename. The
-      // storage path is <user id>/<random uuid>.<ext> — only the validated
-      // lowercase extension is kept.
-      const ext = photoExtension(photo.name);
-      const storagePath = `${sessionUser.id}/${crypto.randomUUID()}.${ext}`;
+      // A pasted URL goes straight into the entries.photo column (a plain
+      // text column rendered directly by <img src> everywhere), so no upload
+      // happens. A local file follows the existing flow: upload to the photos
+      // bucket, then store the public URL.
+      let photoValue;
+      let storagePath = null;
 
-      const { error: uploadError } = await supabase.storage
-        .from("photos")
-        .upload(storagePath, photo, {
-          contentType: photo.type,
-          cacheControl: "3600",
-          upsert: false,
-        });
+      if (photoSource === "url") {
+        photoValue = photoUrl.trim();
+      } else {
+        // OWASP file upload guidance: never trust the original filename. The
+        // storage path is <user id>/<random uuid>.<ext> — only the validated
+        // lowercase extension is kept.
+        const ext = photoExtension(photo.name);
+        storagePath = `${sessionUser.id}/${crypto.randomUUID()}.${ext}`;
 
-      if (uploadError) {
-        // Log the real error; show the visitor only a safe message.
-        console.error("Photo upload failed:", uploadError.message);
-        setGeneralError("We couldn't upload your photo. Please try again.");
-        return;
+        const { error: uploadError } = await supabase.storage
+          .from("photos")
+          .upload(storagePath, photo, {
+            contentType: photo.type,
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadError) {
+          // Log the real error; show the visitor only a safe message.
+          console.error("Photo upload failed:", uploadError.message);
+          setGeneralError("We couldn't upload your photo. Please try again.");
+          return;
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("photos").getPublicUrl(storagePath);
+        photoValue = publicUrl;
       }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("photos").getPublicUrl(storagePath);
 
       // Explicit column list — never a spread of the form object, so owner,
       // id and created_at can never be supplied by the contributor.
@@ -399,7 +531,7 @@ export default function ContributePage() {
           description: values.description,
           contributor: values.contributor,
           place: values.place,
-          photo: publicUrl,
+          photo: photoValue,
           owner: sessionUser.id,
         })
         .select("slug")
@@ -408,12 +540,15 @@ export default function ContributePage() {
       if (insertError) {
         console.error("Entry insert failed:", insertError.message);
         // Best effort: remove the photo that was just uploaded so a failed
-        // save does not leave an orphaned file behind.
-        const { error: removeError } = await supabase.storage
-          .from("photos")
-          .remove([storagePath]);
-        if (removeError) {
-          console.error("Couldn't clean up the uploaded photo:", removeError.message);
+        // save does not leave an orphaned file behind. (Nothing to remove in
+        // URL mode — the photo was never uploaded to storage.)
+        if (storagePath) {
+          const { error: removeError } = await supabase.storage
+            .from("photos")
+            .remove([storagePath]);
+          if (removeError) {
+            console.error("Couldn't clean up the uploaded photo:", removeError.message);
+          }
         }
         // PostgreSQL unique-violation code: the slug is already taken.
         setGeneralError(
@@ -448,6 +583,9 @@ export default function ContributePage() {
     }
   }
 
+  // Which preview to show depends on the active source.
+  const preview = photoSource === "file" ? filePreview : urlPreview;
+
   return (
     <main style={styles.wrap}>
       <p style={styles.kicker}>KHMER LIVING ARCHIVE</p>
@@ -470,9 +608,9 @@ export default function ContributePage() {
         </>
       ) : (
         <>
-          <p style={styles.subtitle}>
+          {/* <p style={styles.subtitle}>
             Signed in as {user.email}. Every field marked * is required.
-          </p>
+          </p> */}
 
           <form style={styles.card} onSubmit={handleSubmit} noValidate>
             {generalError && (
@@ -536,23 +674,87 @@ export default function ContributePage() {
             />
 
             <div style={{ margin: "4px 0" }}>
-              <label style={styles.label} htmlFor="contribute-photo">
+              <label
+                style={styles.label}
+                htmlFor={
+                  photoSource === "file"
+                    ? "contribute-photo"
+                    : "contribute-photo-url"
+                }
+              >
                 PHOTO <span style={styles.required}>*</span>
               </label>
-              <input
-                id="contribute-photo"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style={styles.fileInput}
-                disabled={isSubmitting}
-                onChange={handlePhotoChange}
-              />
+
+              <div
+                style={styles.photoOptions}
+                role="group"
+                aria-label="Photo source"
+              >
+                <button
+                  type="button"
+                  style={
+                    photoSource === "file"
+                      ? { ...styles.optionButton, ...styles.optionButtonActive }
+                      : styles.optionButton
+                  }
+                  aria-pressed={photoSource === "file"}
+                  disabled={isSubmitting}
+                  onClick={() => switchPhotoSource("file")}
+                >
+                  Upload a file
+                </button>
+                <button
+                  type="button"
+                  style={
+                    photoSource === "url"
+                      ? { ...styles.optionButton, ...styles.optionButtonActive }
+                      : styles.optionButton
+                  }
+                  aria-pressed={photoSource === "url"}
+                  disabled={isSubmitting}
+                  onClick={() => switchPhotoSource("url")}
+                >
+                  Paste an image link
+                </button>
+              </div>
+
+              {preview && (
+                <img src={preview} alt="Photo preview" style={styles.preview} />
+              )}
+
+              {photoSource === "file" ? (
+                <input
+                  id="contribute-photo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  style={styles.fileInput}
+                  disabled={isSubmitting}
+                  onChange={handlePhotoChange}
+                />
+              ) : (
+                <input
+                  id="contribute-photo-url"
+                  type="url"
+                  placeholder="https://example.com/photo.jpg"
+                  style={styles.input}
+                  value={photoUrl}
+                  disabled={isSubmitting}
+                  onChange={handlePhotoUrlChange}
+                  aria-invalid={Boolean(errors.photo)}
+                />
+              )}
+
               {errors.photo ? (
                 <p style={styles.fieldError} role="alert">
                   {errors.photo}
                 </p>
-              ) : (
+              ) : photoSource === "file" ? (
                 <p style={styles.hint}>JPG, PNG, or WebP. 5 MB or smaller.</p>
+              ) : (
+                <p style={styles.hint}>
+                  Paste a direct link to an image (https://…). The link is
+                  checked before you submit.
+                </p>
               )}
             </div>
 
