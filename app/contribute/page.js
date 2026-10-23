@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client.js";
 
 // Photo rules. The photos storage bucket enforces the same limits server-side
@@ -177,6 +176,16 @@ const styles = {
     color: "#cbd7ec",
     lineHeight: 1.6,
   },
+  success: {
+    marginTop: 20,
+    padding: "16px 18px",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    borderRadius: 10,
+    color: "#8fd694",
+    fontSize: 16,
+    lineHeight: 1.6,
+  },
   link: {
     color: "#ffffff",
     textDecoration: "underline",
@@ -235,7 +244,6 @@ function Field({ name, label, value, error, hint, maxLength, disabled, multiline
 }
 
 export default function ContributePage() {
-  const router = useRouter();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [form, setForm] = useState({
@@ -257,6 +265,9 @@ export default function ContributePage() {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // True after a successful insert: the form is replaced by a confirmation
+  // message (new entries sit in `pending` until a reviewer approves them).
+  const [submitted, setSubmitted] = useState(false);
   // Guards the async image check: only the newest URL's callbacks may update
   // urlStatus/urlPreview, so a slower older request cannot overwrite a newer
   // one while the user keeps typing.
@@ -522,8 +533,10 @@ export default function ContributePage() {
       }
 
       // Explicit column list — never a spread of the form object, so owner,
-      // id and created_at can never be supplied by the contributor.
-      const { data: inserted, error: insertError } = await supabase
+      // id and created_at can never be supplied by the contributor. `status`
+      // is deliberately NOT sent here: the database default sets every new
+      // entry to `pending`, and only a reviewer can publish it.
+      const { error: insertError } = await supabase
         .from("entries")
         .insert({
           title: values.title,
@@ -533,9 +546,7 @@ export default function ContributePage() {
           place: values.place,
           photo: photoValue,
           owner: sessionUser.id,
-        })
-        .select("slug")
-        .single();
+        });
 
       if (insertError) {
         console.error("Entry insert failed:", insertError.message);
@@ -559,21 +570,10 @@ export default function ContributePage() {
         return;
       }
 
-      // Navigate to the new entry using the project's existing detail route,
-      // /entries/[slug]. Take the actual slug from the inserted row
-      // (defensive: supabase-js .single() returns the row object; handle the
-      // array shape too) so the redirect always lands on this exact entry —
-      // and only ever after the upload and insert have both succeeded.
-      const newSlug = inserted?.slug ?? inserted?.[0]?.slug;
-      if (!newSlug) {
-        console.error(
-          "Entry saved but the insert response had no slug:",
-          inserted
-        );
-        setGeneralError("We couldn't save your entry. Please try again.");
-        return;
-      }
-      router.push(`/entries/${newSlug}`);
+      // No redirect to the new entry page: it is not published yet. Show a
+      // confirmation message instead — the row stays owner-only (via RLS)
+      // until a reviewer approves it.
+      setSubmitted(true);
     } catch (err) {
       // Never expose the technical error to the visitor.
       console.error("Contribution failed:", err.message ?? err);
@@ -601,6 +601,16 @@ export default function ContributePage() {
               log in
             </Link>{" "}
             to add an entry to the archive.
+          </p>
+          <Link href="/" style={styles.back} className="hover-button">
+            ← Back to home
+          </Link>
+        </>
+      ) : submitted ? (
+        <>
+          <p style={styles.success} role="status">
+            Your entry has been submitted and is waiting for review. It will
+            be visible to the public after it is approved.
           </p>
           <Link href="/" style={styles.back} className="hover-button">
             ← Back to home

@@ -159,9 +159,13 @@ export default function Home() {
     async function loadEntries() {
       try {
         const supabase = createClient();
+        // Public archive: only show entries a reviewer has approved. This one
+        // list also feeds the client-side search below, so the single filter
+        // covers both the home grid and search results.
         const { data, error } = await supabase
           .from("entries")
           .select("*")
+          .eq("status", "published")
           .order("created_at", { ascending: false });
 
         if (cancelled) return;

@@ -154,7 +154,15 @@ export default function Navbar() {
         {isLoading ? null : user ? (
           // Signed in: Sign up is replaced by the profile avatar button (just the
           // generated avatar, no label) and Log in is replaced by Log out.
+          // Signed-in users also get a link to their own entries.
           <>
+            <Link
+              href="/my-entries"
+              style={styles.action}
+              className="hover-button"
+            >
+              My Entries
+            </Link>
             <Link
               href="/profile"
               style={styles.profile}

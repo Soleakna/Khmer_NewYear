@@ -460,6 +460,15 @@ export default function EntryEditForm({ entry }) {
         return;
       }
 
+      // Reviewers keep direct control over an entry's status; a
+      // non-reviewer's edit sends the entry back into the review queue
+      // (`pending`) so a contributor can never slip a change straight onto
+      // the public archive. If the RPC fails, treat the user as a
+      // non-reviewer (the safer default) and reset to pending.
+      const { data: isReviewer, error: reviewerError } =
+        await supabase.rpc("is_reviewer");
+      const isReviewerUser = !reviewerError && isReviewer === true;
+
       let storagePath = null;
       let newPhotoUrl = null;
 
@@ -508,6 +517,13 @@ export default function EntryEditForm({ entry }) {
       };
       if (newPhotoUrl) {
         updateFields.photo = newPhotoUrl;
+      }
+
+      // Only reviewers keep the entry's current status; everyone else's save
+      // resets it to `pending` so the change is reviewed before it is shown
+      // to the public again.
+      if (!isReviewerUser) {
+        updateFields.status = "pending";
       }
 
       // .select() is the proof. RLS can silently refuse an update (it then
