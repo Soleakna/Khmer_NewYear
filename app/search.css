@@ -78,3 +78,33 @@ input.search-input:focus {
 .footer-link:hover {
   text-decoration-color: #ffffff;
 }
+
+/* Homepage hero slideshow (components/HeroSection.js): the cross-fade lives
+   in CSS instead of an inline style so the reduced-motion media query can
+   switch it off (an inline transition could not be overridden). The slide
+   wrappers themselves are positioned by inline styles in the component. */
+.hero-slide {
+  transition: opacity 800ms ease;
+  will-change: opacity;
+}
+
+/* Hero slideshow arrow buttons (components/HeroSection.js): hover darkens the
+   glassy circle. The vertical centering is done with an inline
+   `transform: translateY(-50%)`, so these rules deliberately never touch
+   `transform` — a transform here would fight the centering. */
+.hero-arrow {
+  transition: background-color 180ms ease;
+}
+
+.hero-arrow:hover {
+  background-color: rgba(20, 24, 31, 0.75);
+}
+
+/* Respect users who prefer reduced motion: the slides still rotate (they are
+   content, not decoration), but the change is instant instead of a fade. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide,
+  .hero-arrow {
+    transition: none;
+  }
+}

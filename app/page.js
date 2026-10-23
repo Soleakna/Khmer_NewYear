@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import collection from "../collection.config.js";
 import EntryCard from "../components/EntryCard";
+import HeroSection from "../components/HeroSection";
 import { createClient } from "../lib/supabase/client.js";
 
 const styles = {
@@ -235,7 +236,12 @@ export default function Home() {
   );
 
   return (
-    <main style={styles.wrap}>
+    <>
+      {/* Automatic slideshow (same 1200px width as the content below),
+          configured in components/heroSlides.js. The rest of the page
+          is unchanged. */}
+      <HeroSection />
+      <main style={styles.wrap}>
       <p style={styles.kicker}>KHMER LIVING ARCHIVE</p>
       {/* Typewriter title. Unrevealed characters stay in the layout with
           `visibility: hidden` (not display: none), so the h1 keeps its full
@@ -350,6 +356,7 @@ export default function Home() {
       {entries && (
         <p style={styles.count}>entries in the archive: {entries.length}</p>
       )}
-    </main>
+      </main>
+    </>
   );
 }
