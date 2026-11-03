@@ -1,5 +1,4 @@
 import Link from "next/link";
-// import entries from "../../../data/entries.js";
 import EntryOwnerActions from "../../../components/EntryOwnerActions";
 import { createStaticClient } from "../../../lib/supabase/server.js";
 
@@ -67,15 +66,8 @@ const styles = {
   },
 };
 
-// Pre-render one detail page per entry: /entries/num-ansom, /entries/khor, ...
-// The old local `data/entries.js` is gone — entries now live in the Supabase
-// `entries` table — so load the slugs from there. On any Supabase failure we
-// return [] so the build still succeeds and routes render on demand.
 export async function generateStaticParams() {
   try {
-    // Build-time: no request/cookies here, so use the cookie-less server
-    // client (the normal server client would throw "cookies called outside
-    // a request scope" during `next build`).
     const supabase = createStaticClient();
     const { data, error } = await supabase.from("entries").select("slug");
 
@@ -86,8 +78,9 @@ export async function generateStaticParams() {
       );
       return [];
     }
-
-    return (data ?? []).map((entry) => ({ slug: entry.slug }));
+    return (data ?? [])
+      .filter((entry) => typeof entry.slug === "string" && entry.slug.length > 0)
+      .map((entry) => ({ slug: entry.slug }));
   } catch (err) {
     console.error(
       "generateStaticParams: failed to load entry slugs:",
@@ -99,12 +92,6 @@ export async function generateStaticParams() {
 
 export default async function EntryDetail({ params }) {
   const { slug } = await params;
-
-  // Entries live in the Supabase `entries` table; look this slug up there.
-  // The page is public and statically pre-rendered, so it reads through the
-  // cookie-less client — no viewer session is involved (and cookies() would
-  // abort static generation at `next build`). A missing/erroneous entry
-  // simply falls through to the message below.
   let entry = null;
   try {
     const supabase = createStaticClient();
@@ -136,13 +123,7 @@ export default async function EntryDetail({ params }) {
     );
   }
 
-  // Long-form text lives in data/details.js, keyed by slug. If a slug
-  // is missing there, fall back to the card blurb (entry.description).
   const text = entry.description;
-  // Old entries store the picture in `image` (full URL or repository path);
-  // new contributions store a Supabase Storage URL in `photo`. Both are full
-  // URLs/paths, so render whichever exists directly — never rebuild the path
-  // with a "/photos/" prefix, which would break new-style photo URLs.
   const photoSrc = entry.photo || entry.image;
 
   return (
@@ -160,10 +141,7 @@ export default async function EntryDetail({ params }) {
         <span style={styles.label}>PLACE: </span>
         <span style={styles.value}>{entry.place}</span>
       </p>
-      {/* Edit/Delete appear only for the signed-in owner (EntryOwnerActions
-          checks the session client-side). RLS remains the real enforcement
-          boundary for the UPDATE/DELETE. */}
-      <EntryOwnerActions slug={entry.slug} owner={entry.owner} />
+      <EntryOwnerActions slug={entry.slug} id={entry.id} owner={entry.owner} />
       <Link href="/" style={styles.back} className="hover-button">
         ← Back to home
       </Link>

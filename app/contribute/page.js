@@ -611,6 +611,11 @@ export default function ContributePage() {
           <p style={styles.success} role="status">
             Your entry has been submitted and is waiting for review. It will
             be visible to the public after it is approved.
+            <br />
+            <span lang="km">
+              ការចូលរួមចំណែករបស់អ្នកត្រូវបានបញ្ជូនរួចរាល់ ហើយកំពុងរង់ចាំការពិនិត្យ។
+              វានឹងត្រូវបានបង្ហាញជាសាធារណៈ បន្ទាប់ពីទទួលការអនុម័ត។
+            </span>
           </p>
           <Link href="/" style={styles.back} className="hover-button">
             ← Back to home

@@ -8,8 +8,6 @@ input.search-input:focus {
   outline: none; /* removes the browser's black focus border */
 }
 
-
-
 .hover-card,
 .hover-button {
   transform-origin: center;
@@ -25,13 +23,10 @@ input.search-input:focus {
   transform: scale(1.03);
 }
 
-/* Never grow a button that is temporarily disabled,
-   e.g. while a form is submitting. */
 .hover-button:disabled {
   transform: none;
 }
 
-/* Respect users who prefer reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   .hover-card,
   .hover-button {
@@ -39,12 +34,7 @@ input.search-input:focus {
   }
 }
 
-/* Card grid on the browse/search page.
-   Always three fixed columns on a wide window, no matter how few cards a
-   search returns. A lone result card (or two) keeps the exact same size and
-   height it would have in a full row of three, instead of stretching across
-   the whole container the way repeat(auto-fit, …) let it. The media queries
-   below keep the old responsive behaviour on narrow windows. */
+ /* Card grid on the browse/search page. */
 .entry-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -64,9 +54,7 @@ input.search-input:focus {
     grid-template-columns: repeat(1, 1fr);
   }
 }
-/* Footer quick links (components/Footer.js): the underline is drawn with
-   text-decoration but its color is TRANSPARENT by default, so no underline
-   is ever visible until hover fades it to white. Smooth, hover-only. */
+
 .footer-link {
   text-decoration: underline;
   text-decoration-color: transparent;
@@ -79,19 +67,13 @@ input.search-input:focus {
   text-decoration-color: #ffffff;
 }
 
-/* Homepage hero slideshow (components/HeroSection.js): the cross-fade lives
-   in CSS instead of an inline style so the reduced-motion media query can
-   switch it off (an inline transition could not be overridden). The slide
-   wrappers themselves are positioned by inline styles in the component. */
+ /* Homepage hero slideshow */
 .hero-slide {
   transition: opacity 800ms ease;
   will-change: opacity;
 }
 
-/* Hero slideshow arrow buttons (components/HeroSection.js): hover darkens the
-   glassy circle. The vertical centering is done with an inline
-   `transform: translateY(-50%)`, so these rules deliberately never touch
-   `transform` — a transform here would fight the centering. */
+/* Hero slideshow arrow buttons */
 .hero-arrow {
   transition: background-color 180ms ease;
 }
@@ -100,8 +82,6 @@ input.search-input:focus {
   background-color: rgba(20, 24, 31, 0.75);
 }
 
-/* Respect users who prefer reduced motion: the slides still rotate (they are
-   content, not decoration), but the change is instant instead of a fade. */
 @media (prefers-reduced-motion: reduce) {
   .hero-slide,
   .hero-arrow {

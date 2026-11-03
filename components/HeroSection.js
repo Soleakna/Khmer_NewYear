@@ -2,18 +2,13 @@
 import { useEffect, useState } from "react";
 import slides from "./heroSlides";
 
-// Fallback display time when a slide omits durationMs: 5 seconds.
 const DEFAULT_DURATION_MS = 5000;
 
 const styles = {
   section: {
     position: "relative",
-    // Same width and centering as the content column on the home page
-    // (app/page.js wraps it in a 1200px max-width column).
     width: "100%",
     maxWidth: 1600,
-    // Small gap below the sticky navbar; `auto` on the sides keeps the
-    // hero centred on the page.
     margin: "0 auto 0",
     // Previous height (clamp(420px, 58vh, 660px)) increased by exactly 100px.
     minHeight: "clamp(470px, calc(58vh + 100px), 710px)",
@@ -36,7 +31,6 @@ const styles = {
   overlay: {
     position: "absolute",
     inset: 0,
-    // A touch darker at the bottom because the text now sits there.
     background:
       "linear-gradient(180deg, rgba(20, 24, 31, 0.35) 0%, rgba(20, 24, 31, 0.85) 100%)",
   },
@@ -75,7 +69,9 @@ const styles = {
     justifyContent: "center",
     width: 44,
     height: 44,
-    padding: 0,
+    boxSizing: "border-box",
+    padding: 0 ,
+    margin: 0,
     borderRadius: "50%",
     backgroundColor: "rgba(20, 24, 31, 0.45)",
     border: "1px solid rgba(255, 255, 255, 0.25)",
@@ -97,10 +93,6 @@ export default function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const slideCount = slides.length;
 
-  // Auto-advance: show each slide for its own durationMs (default 5 s), then
-  // fade to the next one. (currentIndex + 1) % slideCount wraps the last slide
-  // back to the first, so the loop never ends. The timeout is cleared before
-  // every next tick and on unmount, so no timer leaks.
   useEffect(() => {
     if (slideCount === 0) return;
 
@@ -114,13 +106,8 @@ export default function HeroSection() {
     return () => window.clearTimeout(timer);
   }, [currentIndex, slideCount]);
 
-  // No configured slides — render nothing instead of crashing.
   if (slideCount === 0) return null;
 
-  // Manual navigation: wraps around at both ends (previous on the first slide
-  // goes to the last, next on the last slide goes to the first). Changing
-  // currentIndex also restarts the 5-second auto-advance timer, because the
-  // effect above re-runs on every change (its cleanup clears the old timer).
   const goToPrevious = () =>
     setCurrentIndex((index) => (index - 1 + slideCount) % slideCount);
 
@@ -131,9 +118,6 @@ export default function HeroSection() {
 
   return (
     <section style={styles.section} aria-label="Khmer New Year highlights">
-      {/* All slides stay stacked on top of each other; only the active one is
-          opaque, so each change is a smooth cross-fade (see .hero-slide in
-          app/search.css, where reduced motion switches the fade off). */}
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -165,7 +149,8 @@ export default function HeroSection() {
         onClick={goToPrevious}
         aria-label="Previous slide"
       >
-        <span aria-hidden="true">‹</span>
+        <span aria-hidden="true"   style={{ display: "block", lineHeight: 1, transform: "translateY(-1px)" }}
+        >‹</span>
       </button>
       <button
         type="button"
@@ -174,7 +159,8 @@ export default function HeroSection() {
         onClick={goToNext}
         aria-label="Next slide"
       >
-        <span aria-hidden="true">›</span>
+        <span aria-hidden="true"   style={{ display: "block", lineHeight: 1, transform: "translateY(-1px)" }}
+        >›</span>
       </button>
     </section>
   );

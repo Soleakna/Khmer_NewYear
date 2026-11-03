@@ -74,15 +74,16 @@ const styles = {
   },
 };
 
-// Props: the entry's slug (route key) and owner (auth user id). The buttons
-// are shown only while the signed-in user owns this entry — visibility is UI
-// convenience, NOT security. Row Level Security remains the real enforcement
-// for the UPDATE/DELETE, which is why both flows verify the affected rows.
+// Props: the entry's slug (route key), its primary key `id`, and owner
+// (auth user id). The buttons are shown only while the signed-in user owns
+// this entry — visibility is UI convenience, NOT security. Row Level
+// Security remains the real enforcement for the UPDATE/DELETE, which is why
+// both flows verify the affected rows.
 //
 // `compact` renders a smaller button pair sized for the entry cards, and
 // `onDeleted` replaces the default navigate-home behaviour (e.g. to reload
 // the archive so a deleted card disappears immediately).
-export default function EntryOwnerActions({ slug, owner, compact = false, onDeleted }) {
+export default function EntryOwnerActions({ id, slug, owner, compact = false, onDeleted }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -125,14 +126,18 @@ export default function EntryOwnerActions({ slug, owner, compact = false, onDele
     try {
       const supabase = createClient();
 
+      // Target the exact row this card represents. The slug is the normal
+      // key, but the column is nullable and legacy rows can carry NULL — a
+      // `slug = null` filter can never match them, so fall back to the row's
+      // primary key. RLS applies to the row regardless of the filter column
+      // (auth.uid() = owner), so neither key can touch someone else's entry.
+      let query = supabase.from("entries").delete();
+      query = slug ? query.eq("slug", slug) : query.eq("id", id);
+
       // .select() returns the rows the delete actually removed. RLS can
       // refuse a delete by affecting zero rows without raising an error,
       // so the returned rows — not the absence of an error — are the proof.
-      const { data: deleted, error: deleteError } = await supabase
-        .from("entries")
-        .delete()
-        .eq("slug", slug)
-        .select();
+      const { data: deleted, error: deleteError } = await query.select();
 
       if (deleteError) {
         console.error("Entry delete failed:", deleteError.message);
@@ -141,7 +146,7 @@ export default function EntryOwnerActions({ slug, owner, compact = false, onDele
       }
 
       if (!deleted || deleted.length === 0) {
-        console.error("Entry delete returned no rows:", { slug });
+        console.error("Entry delete returned no rows:", { slug, id });
         setError("That change wasn't saved");
         return;
       }

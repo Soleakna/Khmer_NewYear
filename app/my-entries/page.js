@@ -2,7 +2,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase/client.js";
+import MyEntryCard from "../../components/MyEntryCard";
 
+// Page-level styles only. Each entry row is rendered by the reusable
+// MyEntryCard component (components/MyEntryCard.js), which owns the card,
+// title-link, status and meta styles.
 const styles = {
   wrap: {
     maxWidth: 900,
@@ -41,35 +45,6 @@ const styles = {
     flexDirection: "column",
     gap: 16,
   },
-  card: {
-    padding: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    border: "1px solid rgba(255, 255, 255, 0.18)",
-    borderRadius: 10,
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
-  },
-  entryLink: {
-    color: "#ffffff",
-    textDecoration: "none",
-  },
-  entryTitle: {
-    fontSize: 20,
-    fontWeight: 700,
-    margin: 0,
-  },
-  status: {
-    fontSize: 14,
-    fontWeight: 600,
-    color: "#cbd7ec",
-    margin: "8px 0 0",
-  },
-  meta: {
-    fontSize: 14,
-    color: "#cbd7ec",
-    margin: "4px 0 0",
-  },
   box: {
     marginTop: 28,
     padding: 24,
@@ -96,27 +71,12 @@ const styles = {
   },
 };
 
-// The entries.status column stores one of three values; show it in plain
-// English so contributors know where their entry is in the review flow.
-const STATUS_LABELS = {
-  pending: "Pending review",
-  published: "Published",
-  returned: "Returned for changes",
-};
-
-function statusLabel(status) {
-  return STATUS_LABELS[status] ?? status ?? "Unknown";
-}
-
 export default function MyEntriesPage() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [entries, setEntries] = useState(null);
   const [error, setError] = useState(null);
 
-  // Ask Supabase who the session belongs to (same pattern as the Navbar),
-  // then load only that user's entries — `owner` must come from the session,
-  // never from the URL or any form input, and RLS backs it up.
   useEffect(() => {
     let cancelled = false;
 
@@ -202,22 +162,7 @@ export default function MyEntriesPage() {
           </p>
           <div style={styles.list}>
             {entries.map((entry) => (
-              <article key={entry.id} style={styles.card}>
-                <h2 style={styles.entryTitle}>
-                  <Link
-                    href={`/entries/${entry.slug}`}
-                    style={styles.entryLink}
-                    className="hover-button"
-                  >
-                    {entry.title}
-                  </Link>
-                </h2>
-                <p style={styles.status}>Status: {statusLabel(entry.status)}</p>
-                {entry.contributor && (
-                  <p style={styles.meta}>CONTRIBUTED BY: {entry.contributor}</p>
-                )}
-                {entry.place && <p style={styles.meta}>PLACE: {entry.place}</p>}
-              </article>
+              <MyEntryCard key={entry.id} entry={entry} />
             ))}
           </div>
         </>

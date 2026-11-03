@@ -1,18 +1,17 @@
 
-
 const slides = [
   {
     image: "https://www.novotelphnompenhbkk1.com/wp-content/uploads/sites/53/2026/04/Khmer-New-Year.jpg",
     heading: "Khmer New Year",
     subtitle:
-      "បុណ្យចូលឆ្នាំខ្មែរ — a living archive of Cambodia's most joyful celebration.",
+      "A living archive of Cambodia's most joyful celebration.",
     durationMs: 5000,
   },
   {
     image: "https://d34vm3j4h7f97z.cloudfront.net/original/4X/4/c/5/4c59177db490f809bd55c6ec2d59fc047412caa1.jpeg",
     heading: "Choul Chnam Thmey",
     subtitle:
-      "ចូលឆ្នាំថ្មី — water, sand, family, and new beginnings.",
+      "Water, sand, family, and new beginnings.",
     durationMs: 5000,
   },
   {

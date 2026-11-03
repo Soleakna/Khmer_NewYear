@@ -4,20 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase/client.js";
 
-// Photo rules — identical to /contribute. The photos bucket enforces the
-// same limits server-side (5 MB, JPG/PNG/WebP); these checks just stop a
-// bad file from being queued in the first place.
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const ALLOWED_PHOTO_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
-// An image URL must be a direct http(s) link. The real check is loading it
-// with a temporary Image in the browser (see handlePhotoUrlChange) — this
-// pattern only rejects obvious nonsense early.
+
 const URL_PATTERN = /^https?:\/\/[^\s]+$/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-// Same courtesy limits as /contribute. The entries table's text columns have
-// no length limit — these are form-layer only; the database stays the final
 // constraint layer.
 const LIMITS = {
   title: 200,
@@ -182,15 +175,11 @@ const styles = {
   },
 };
 
-// Same helper as /contribute: keep only the validated lowercase extension
-// from a file name. The original filename is never used as a storage path.
 function photoExtension(name) {
   const index = name.lastIndexOf(".");
   return index === -1 ? "" : name.slice(index + 1).toLowerCase();
 }
 
-// Small labeled field shared by all text inputs (and the description
-// textarea, which sets `multiline`) — identical to the one on /contribute.
 function Field({ name, label, value, error, hint, maxLength, disabled, multiline, onChange }) {
   const shared = {
     id: `edit-${name}`,
@@ -224,8 +213,7 @@ export default function EntryEditForm({ entry }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  // Prefill the form with the existing entry's values (the editable text
-  // columns only — id, created_at and owner are never part of this form).
+ 
   const [form, setForm] = useState(() => ({
     title: entry.title ?? "",
     slug: entry.slug ?? "",
@@ -233,9 +221,7 @@ export default function EntryEditForm({ entry }) {
     contributor: entry.contributor ?? "",
     place: entry.place ?? "",
   }));
-  // Photo input: either a local file or a pasted image URL. `filePreview` is
-  // a temporary blob: URL for the selected file; `urlPreview` mirrors the URL
-  // once it has actually loaded (urlStatus === "ok").
+  
   const [photoSource, setPhotoSource] = useState("file"); // "file" | "url"
   const [photo, setPhoto] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
@@ -245,18 +231,11 @@ export default function EntryEditForm({ entry }) {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Guards the async image check: only the newest URL's callbacks may update
-  // urlStatus/urlPreview, so a slower older request cannot overwrite a newer
-  // one while the user keeps typing.
+  
   const urlCheckIdRef = useRef(0);
 
-  // Old entries store the picture in `image`; new entries store a Supabase
-  // Storage URL in `photo`. Show whichever exists without rebuilding paths.
   const currentPhoto = entry.photo || entry.image;
 
-  // Ask Supabase who the session belongs to. The form is only shown to the
-  // entry's owner — a courtesy, exactly like hiding the buttons. RLS is the
-  // real security boundary and still filters the UPDATE below.
   useEffect(() => {
     let cancelled = false;
 
@@ -304,8 +283,6 @@ export default function EntryEditForm({ entry }) {
     }
   }
 
-  // Switching between "upload a file" and "paste an image URL" keeps the
-  // preview of whichever source is now active (nothing is lost).
   function switchPhotoSource(source) {
     setPhotoSource(source);
     if (errors.photo) {
@@ -317,9 +294,6 @@ export default function EntryEditForm({ entry }) {
     }
   }
 
-  // Try to load the pasted URL as an image. onload -> the link works and the
-  // preview shows; onerror -> the link is broken or is not an image, so the
-  // form shows a clear error and keeps the existing photo.
   function handlePhotoUrlChange(event) {
     const url = event.target.value.trim();
     setPhotoUrl(url);
@@ -347,11 +321,6 @@ export default function EntryEditForm({ entry }) {
     img.src = url;
   }
 
-  // Same required-field and length rules as /contribute. Unlike contribute,
-  // the photo is optional here: no file/URL means "keep the existing photo".
-  // `photoState` bundles everything the photo field needs to validate itself:
-  // which source is active, the picked file, the pasted URL, and the result
-  // of the browser's live image check (urlStatus).
   function validate(values, photoState) {
     const next = {};
 
@@ -447,10 +416,6 @@ export default function EntryEditForm({ entry }) {
 
     try {
       const supabase = createClient();
-
-      // Only needed to build the photo storage path. The UPDATE itself
-      // stays protected by RLS, and no owner value is ever read from the
-      // form — RLS's WITH CHECK (auth.uid() = owner) is what enforces that.
       const {
         data: { user: sessionUser },
         error: userError,
@@ -460,11 +425,6 @@ export default function EntryEditForm({ entry }) {
         return;
       }
 
-      // Reviewers keep direct control over an entry's status; a
-      // non-reviewer's edit sends the entry back into the review queue
-      // (`pending`) so a contributor can never slip a change straight onto
-      // the public archive. If the RPC fails, treat the user as a
-      // non-reviewer (the safer default) and reset to pending.
       const { data: isReviewer, error: reviewerError } =
         await supabase.rpc("is_reviewer");
       const isReviewerUser = !reviewerError && isReviewer === true;
@@ -472,15 +432,10 @@ export default function EntryEditForm({ entry }) {
       let storagePath = null;
       let newPhotoUrl = null;
 
-      // Optional photo. A pasted URL replaces the photo directly (the photo
-      // column is plain text rendered by <img src> everywhere). A picked file
-      // follows the existing upload flow. Nothing chosen -> keep the current
-      // photo (newPhotoUrl stays null, so the column is left untouched).
       if (photoSource === "url" && urlStatus === "ok" && photoUrl.trim() !== "") {
         newPhotoUrl = photoUrl.trim();
       } else if (photoSource === "file" && photo) {
-        // Same OWASP rules as /contribute — the storage path is
-        // <user id>/<random uuid>.<ext> and the original filename is never used.
+
         const ext = photoExtension(photo.name);
         storagePath = `${sessionUser.id}/${crypto.randomUUID()}.${ext}`;
 
@@ -504,10 +459,6 @@ export default function EntryEditForm({ entry }) {
         newPhotoUrl = publicUrl;
       }
 
-      // Explicit column list — never a spread of the form object — so id,
-      // created_at and owner can never be changed from here. `photo` is only
-      // included when a new file was uploaded; otherwise the existing value
-      // stays untouched.
       const updateFields = {
         title: values.title,
         slug: values.slug,
@@ -519,16 +470,11 @@ export default function EntryEditForm({ entry }) {
         updateFields.photo = newPhotoUrl;
       }
 
-      // Only reviewers keep the entry's current status; everyone else's save
-      // resets it to `pending` so the change is reviewed before it is shown
-      // to the public again.
       if (!isReviewerUser) {
         updateFields.status = "pending";
       }
 
-      // .select() is the proof. RLS can silently refuse an update (it then
-      // affects zero rows without raising an error), so no error does NOT
-      // mean the save succeeded — a returned row does.
+
       const { data: updated, error: updateError } = await supabase
         .from("entries")
         .update(updateFields)
@@ -537,8 +483,6 @@ export default function EntryEditForm({ entry }) {
 
       if (updateError) {
         console.error("Entry update failed:", updateError.message);
-        // Best effort: remove the newly uploaded photo so a failed save
-        // does not leave an orphaned file (same pattern as /contribute).
         if (storagePath) {
           const { error: removeError } = await supabase.storage
             .from("photos")
@@ -550,8 +494,7 @@ export default function EntryEditForm({ entry }) {
             );
           }
         }
-        // PostgreSQL unique-violation code: a different entry already took
-        // the new slug.
+
         setGeneralError(
           updateError.code === "23505"
             ? "That slug is already used. Please pick a different one."
@@ -561,8 +504,6 @@ export default function EntryEditForm({ entry }) {
       }
 
       if (!updated || updated.length === 0) {
-        // Zero rows: RLS refused the change or the row no longer exists.
-        // Log the real situation; tell the user only the safe message.
         console.error("Entry update returned no rows:", {
           slug: entry.slug,
           updateFields,
@@ -582,8 +523,6 @@ export default function EntryEditForm({ entry }) {
         return;
       }
 
-      // Navigate to the saved entry (mirrors /contribute). Take the slug
-      // from the returned row so a slug change lands on the new URL.
       const savedSlug = updated?.[0]?.slug ?? updated?.slug ?? values.slug;
       router.push(`/entries/${savedSlug}`);
     } catch (err) {
