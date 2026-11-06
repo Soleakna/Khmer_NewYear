@@ -67,6 +67,10 @@ const styles = {
   required: {
     color: "#ff9a9a",
   },
+  optional: {
+    color: "#cbd7ec",
+    fontWeight: 400,
+  },
   input: {
     width: "100%",
     boxSizing: "border-box",
@@ -213,7 +217,7 @@ function photoExtension(name) {
 
 // Small labeled field shared by all text inputs (and the description
 // textarea, which sets `multiline`).
-function Field({ name, label, value, error, hint, maxLength, disabled, multiline, onChange }) {
+function Field({ name, label, value, error, hint, maxLength, disabled, multiline, optional, onChange }) {
   const shared = {
     id: `contribute-${name}`,
     name,
@@ -229,7 +233,12 @@ function Field({ name, label, value, error, hint, maxLength, disabled, multiline
   return (
     <div style={{ margin: "0 0 4px" }}>
       <label style={styles.label} htmlFor={`contribute-${name}`}>
-        {label} <span style={styles.required}>*</span>
+        {label}{" "}
+        {optional ? (
+          <span style={styles.optional}>OPTIONAL</span>
+        ) : (
+          <span style={styles.required}>*</span>
+        )}
       </label>
       {multiline ? <textarea {...shared} rows={4} /> : <input {...shared} />}
       {error ? (
@@ -250,6 +259,7 @@ export default function ContributePage() {
     title: "",
     slug: "",
     description: "",
+    description_km: "",
     contributor: "",
     place: "",
   });
@@ -385,6 +395,11 @@ export default function ContributePage() {
       next.description = `Description must be ${LIMITS.description} characters or fewer.`;
     }
 
+    // Khmer description is optional, so an empty value is allowed.
+    if (values.description_km.length > LIMITS.description) {
+      next.description_km = `Khmer description must be ${LIMITS.description} characters or fewer.`;
+    }
+
     if (values.contributor === "") {
       next.contributor = "Please enter the contributor.";
     } else if (values.contributor.length > LIMITS.contributor) {
@@ -436,6 +451,7 @@ export default function ContributePage() {
       title: form.title.trim(),
       slug: form.slug.trim(),
       description: form.description.trim(),
+      description_km: form.description_km.trim(),
       contributor: form.contributor.trim(),
       place: form.place.trim(),
     };
@@ -533,6 +549,7 @@ export default function ContributePage() {
           title: values.title,
           slug: values.slug,
           description: values.description,
+          description_km: values.description_km || null,
           contributor: values.contributor,
           place: values.place,
           photo: photoValue,
@@ -653,6 +670,19 @@ export default function ContributePage() {
               value={form.description}
               error={errors.description}
               hint={`Up to ${LIMITS.description} characters. What does this entry tell us?`}
+              maxLength={LIMITS.description}
+              multiline
+              disabled={isSubmitting}
+              onChange={handleChange}
+            />
+
+            <Field
+              name="description_km"
+              label="KHMER DESCRIPTION"
+              optional
+              value={form.description_km}
+              error={errors.description_km}
+              hint={`Up to ${LIMITS.description} characters, in Khmer.`}
               maxLength={LIMITS.description}
               multiline
               disabled={isSubmitting}

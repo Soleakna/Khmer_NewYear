@@ -28,6 +28,27 @@ const styles = {
     whiteSpace: "pre-line",
     margin: "0 0 24px",
   },
+  langLabel: {
+    fontSize: 12,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    color: "#D9B64A",
+    margin: "0 0 6px",
+  },
+  textKm: {
+    fontSize: 18,
+    color: "#ffffff",
+    lineHeight: 1.7,
+    whiteSpace: "pre-line",
+    margin: "0 0 24px",
+  },
+  fallback: {
+    fontSize: 16,
+    fontStyle: "italic",
+    color: "rgba(241, 232, 216, 0.7)",
+    lineHeight: 1.6,
+    margin: "0 0 24px",
+  },
   row: {
     display: "flex",
     flexDirection: "row",
@@ -132,7 +153,16 @@ export default async function EntryDetail({ params }) {
         <img src={photoSrc} alt={entry.title} style={styles.image} />
       )}
       <h1 style={styles.title}>{entry.title}</h1>
+      <p style={styles.langLabel}>ENGLISH</p>
       <p style={styles.text}>{text}</p>
+      <p style={styles.langLabel}>ភាសាខ្មែរ</p>
+      {entry.description_km ? (
+        <p style={styles.textKm}>{entry.description_km}</p>
+      ) : (
+        <p style={styles.fallback}>
+          No Khmer description has been added for this entry yet.
+        </p>
+      )}
       <p style={styles.row}>
         <span style={styles.label}>Contributed by: </span>
         <span style={styles.value}>{entry.contributor}</span>

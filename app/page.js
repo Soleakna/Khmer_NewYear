@@ -37,10 +37,10 @@ const styles = {
     maxWidth: 720,
   },
   intro: {
-    maxWidth: 780,
+    maxWidth: "100%",
     margin: 0,
     color: "rgba(241, 232, 216, 0.85)",
-    fontSize: "clamp(15px, 1.8vw, 17px)",
+    fontSize: "clamp(18px, 1.8vw, 17px)",
     lineHeight: 1.85,
     textAlign: "left",
   },

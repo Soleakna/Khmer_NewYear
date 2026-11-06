@@ -11,7 +11,7 @@ const styles = {
     padding: 18,
     backgroundColor: "rgba(43, 27, 18, 0.6)",
     border: "1px solid rgba(241, 232, 216, 0.14)",
-    borderRadius: 14,
+    borderRadius: 20,
     backdropFilter: "blur(14px)",
     WebkitBackdropFilter: "blur(14px)",
     boxShadow: "0 12px 32px rgba(20, 10, 5, 0.25)",

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase/client.js";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -114,6 +113,10 @@ const styles = {
     fontFamily: "inherit",
     fontWeight: 600,
   },
+  buttonSaved: {
+    backgroundColor: "#2E7D32",
+    border: "1px solid #1B5E20",
+  },
   currentPhoto: {
     display: "block",
     width: 180,
@@ -180,7 +183,7 @@ function photoExtension(name) {
   return index === -1 ? "" : name.slice(index + 1).toLowerCase();
 }
 
-function Field({ name, label, value, error, hint, maxLength, disabled, multiline, onChange }) {
+function Field({ name, label, value, error, hint, maxLength, disabled, multiline, optional, onChange }) {
   const shared = {
     id: `edit-${name}`,
     name,
@@ -195,7 +198,12 @@ function Field({ name, label, value, error, hint, maxLength, disabled, multiline
   return (
     <div style={{ margin: "0 0 4px" }}>
       <label style={styles.label} htmlFor={`edit-${name}`}>
-        {label} <span style={styles.required}>*</span>
+        {label}{" "}
+        {optional ? (
+          <span style={styles.optional}>OPTIONAL</span>
+        ) : (
+          <span style={styles.required}>*</span>
+        )}
       </label>
       {multiline ? <textarea {...shared} rows={4} /> : <input {...shared} />}
       {error ? (
@@ -210,7 +218,6 @@ function Field({ name, label, value, error, hint, maxLength, disabled, multiline
 }
 
 export default function EntryEditForm({ entry }) {
-  const router = useRouter();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
  
@@ -218,6 +225,7 @@ export default function EntryEditForm({ entry }) {
     title: entry.title ?? "",
     slug: entry.slug ?? "",
     description: entry.description ?? "",
+    description_km: entry.description_km ?? "",
     contributor: entry.contributor ?? "",
     place: entry.place ?? "",
   }));
@@ -231,8 +239,11 @@ export default function EntryEditForm({ entry }) {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // True only after Supabase confirms the update. Cleared by any edit.
+  const [isSaved, setIsSaved] = useState(false);
   
   const urlCheckIdRef = useRef(0);
+  const savingRef = useRef(false);
 
   const currentPhoto = entry.photo || entry.image;
 
@@ -258,6 +269,7 @@ export default function EntryEditForm({ entry }) {
 
   function handleChange(event) {
     const { name, value } = event.target;
+    setIsSaved(false);
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors((prev) => {
@@ -270,6 +282,7 @@ export default function EntryEditForm({ entry }) {
 
   function handlePhotoChange(event) {
     const file = event.target.files && event.target.files[0];
+    setIsSaved(false);
     setPhoto(file);
     // Preview the chosen file immediately with a temporary object URL.
     if (filePreview) URL.revokeObjectURL(filePreview);
@@ -284,6 +297,7 @@ export default function EntryEditForm({ entry }) {
   }
 
   function switchPhotoSource(source) {
+    setIsSaved(false);
     setPhotoSource(source);
     if (errors.photo) {
       setErrors((prev) => {
@@ -296,6 +310,7 @@ export default function EntryEditForm({ entry }) {
 
   function handlePhotoUrlChange(event) {
     const url = event.target.value.trim();
+    setIsSaved(false);
     setPhotoUrl(url);
     const checkId = ++urlCheckIdRef.current;
 
@@ -345,6 +360,11 @@ export default function EntryEditForm({ entry }) {
       next.description = `Description must be ${LIMITS.description} characters or fewer.`;
     }
 
+    // Khmer description is optional, so an empty value is allowed.
+    if (values.description_km.length > LIMITS.description) {
+      next.description_km = `Khmer description must be ${LIMITS.description} characters or fewer.`;
+    }
+
     if (values.contributor === "") {
       next.contributor = "Please enter the contributor.";
     } else if (values.contributor.length > LIMITS.contributor) {
@@ -389,13 +409,16 @@ export default function EntryEditForm({ entry }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (isSubmitting) return;
+    // Ref check blocks a second click immediately, before React re-renders
+    // and applies the disabled state.
+    if (savingRef.current) return;
 
     // Trim every text value before validation AND before saving.
     const values = {
       title: form.title.trim(),
       slug: form.slug.trim(),
       description: form.description.trim(),
+      description_km: form.description_km.trim(),
       contributor: form.contributor.trim(),
       place: form.place.trim(),
     };
@@ -412,6 +435,10 @@ export default function EntryEditForm({ entry }) {
     }
 
     setGeneralError(null);
+    setIsSaved(false);
+    // Set only once validation has passed, so every path after this point
+    // runs through the `finally` below and releases the guard.
+    savingRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -463,6 +490,7 @@ export default function EntryEditForm({ entry }) {
         title: values.title,
         slug: values.slug,
         description: values.description,
+        description_km: values.description_km || null,
         contributor: values.contributor,
         place: values.place,
       };
@@ -523,13 +551,15 @@ export default function EntryEditForm({ entry }) {
         return;
       }
 
-      const savedSlug = updated?.[0]?.slug ?? updated?.slug ?? values.slug;
-      router.push(`/entries/${savedSlug}`);
+      // Supabase confirmed the update, so show the saved state. The user
+      // stays on the form; the state is cleared by the next edit.
+      setIsSaved(true);
     } catch (err) {
       // Never expose the technical error to the visitor.
       console.error("Edit failed:", err.message ?? err);
       setGeneralError("That change wasn't saved");
     } finally {
+      savingRef.current = false;
       setIsSubmitting(false);
     }
   }
@@ -618,6 +648,19 @@ export default function EntryEditForm({ entry }) {
           value={form.description}
           error={errors.description}
           hint={`Up to ${LIMITS.description} characters. What does this entry tell us?`}
+          maxLength={LIMITS.description}
+          multiline
+          disabled={isSubmitting}
+          onChange={handleChange}
+        />
+
+        <Field
+          name="description_km"
+          label="KHMER DESCRIPTION"
+          optional
+          value={form.description_km}
+          error={errors.description_km}
+          hint={`Up to ${LIMITS.description} characters, in Khmer.`}
           maxLength={LIMITS.description}
           multiline
           disabled={isSubmitting}
@@ -744,11 +787,16 @@ export default function EntryEditForm({ entry }) {
           disabled={isSubmitting}
           style={{
             ...styles.button,
+            ...(isSaved ? styles.buttonSaved : null),
             opacity: isSubmitting ? 0.5 : 1,
             cursor: isSubmitting ? "default" : "pointer",
           }}
         >
-          {isSubmitting ? "Saving your changes…" : "Save changes"}
+          {isSubmitting
+            ? "Saving your changes…"
+            : isSaved
+              ? "Saved"
+              : "Save changes"}
         </button>
       </form>
 
