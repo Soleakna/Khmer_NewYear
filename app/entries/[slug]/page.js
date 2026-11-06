@@ -134,11 +134,11 @@ export default async function EntryDetail({ params }) {
       <h1 style={styles.title}>{entry.title}</h1>
       <p style={styles.text}>{text}</p>
       <p style={styles.row}>
-        <span style={styles.label}>CONTRIBUTED BY: </span>
+        <span style={styles.label}>Contributed by: </span>
         <span style={styles.value}>{entry.contributor}</span>
       </p>
       <p style={styles.row}>
-        <span style={styles.label}>PLACE: </span>
+        <span style={styles.label}>Place: </span>
         <span style={styles.value}>{entry.place}</span>
       </p>
       <EntryOwnerActions slug={entry.slug} id={entry.id} owner={entry.owner} />

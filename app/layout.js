@@ -14,12 +14,15 @@ export default function RootLayout({ children }) {
       <body
         style={{
           margin: 0,
-          // backgroundColor: "#14181F",
-          backgroundImage: "url('https://png.pngtree.com/thumb_back/fh260/background/20221102/pngtree-country-life-of-asia-children-play-water-and-build-sand-pagoda-image_1434723.jpg')",
+          // The traditional Cambodian photo stays, but warm overlays darken
+          // it just enough to keep text readable and give the site a cozy
+          // terracotta-brown base, with a subtle gold glow near the top.
+          backgroundImage:
+            "radial-gradient(circle at 50% -10%, rgba(201, 162, 39, 0.14), transparent 56%), linear-gradient(rgba(43, 27, 18, 0.58), rgba(31, 21, 12, 0.72)), url('https://png.pngtree.com/thumb_back/fh260/background/20221102/pngtree-country-life-of-asia-children-play-water-and-build-sand-pagoda-image_1434723.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
-          color: "#E8EDF2",
+          color: "#F1E8D8",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           minHeight: "100vh",

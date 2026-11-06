@@ -13,7 +13,7 @@ const styles = {
     // Previous height (clamp(420px, 58vh, 660px)) increased by exactly 100px.
     minHeight: "clamp(470px, calc(58vh + 100px), 710px)",
     overflow: "hidden",
-    backgroundColor: "#14181F",
+    backgroundColor: "#2B1B12",
   },
   slide: {
     position: "absolute",
@@ -31,33 +31,61 @@ const styles = {
   overlay: {
     position: "absolute",
     inset: 0,
+    // Warm dark-brown scrim: lightest mid-image so the photo still breathes,
+    // strongest just behind the heading and subtitle for readability.
     background:
-      "linear-gradient(180deg, rgba(20, 24, 31, 0.35) 0%, rgba(20, 24, 31, 0.85) 100%)",
+      "linear-gradient(180deg, rgba(31, 21, 12, 0.5) 0%, rgba(31, 21, 12, 0.26) 45%, rgba(31, 21, 12, 0.88) 100%)",
   },
   content: {
+    // Middle-bottom placement: centered horizontally, and parked at ~60% of
+    // the hero height — clearly below the vertical center, clearly above the
+    // very bottom edge.
     position: "absolute",
-    inset: 0,
+    top: "60%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "100%",
+    boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "flex-end",
     textAlign: "center",
-    padding: "clamp(36px, 7vh, 64px) clamp(24px, 5vw, 56px)",
+    padding: "0 clamp(24px, 5vw, 56px)",
+  },
+  kicker: {
+    margin: "0 0 16px",
+    fontSize: "clamp(12px, 1.4vw, 14px)",
+    fontWeight: 600,
+    letterSpacing: 4,
+    textTransform: "uppercase",
+    color: "#D9B64A",
+    textShadow: "0 1px 12px rgba(20, 10, 5, 0.5)",
+  },
+  divider: {
+    width: 56,
+    height: 2,
+    border: "none",
+    margin: "0 0 18px",
+    background:
+      "linear-gradient(90deg, rgba(201, 162, 39, 0), rgba(201, 162, 39, 0.85), rgba(201, 162, 39, 0))",
   },
   heading: {
-    fontSize: "clamp(30px, 5.2vw, 54px)",
+    fontSize: "clamp(32px, 5.4vw, 58px)",
     fontWeight: 700,
-    color: "#ffffff",
-    lineHeight: 1.15,
-    margin: "0 0 12px",
+    color: "#FFF8EC",
+    letterSpacing: "-0.5px",
+    lineHeight: 1.12,
+    margin: "0 0 14px",
     maxWidth: 900,
+    textShadow: "0 2px 24px rgba(20, 10, 5, 0.55)",
   },
   subtitle: {
-    fontSize: "clamp(15px, 2vw, 19px)",
-    color: "#ffffff",
-    lineHeight: 1.6,
+    fontSize: "clamp(15px, 2vw, 18px)",
+    color: "rgba(255, 248, 236, 0.9)",
+    lineHeight: 1.7,
     margin: 0,
-    maxWidth: 640,
+    maxWidth: 560,
+    textShadow: "0 1px 16px rgba(20, 10, 5, 0.45)",
   },
   
   arrow: {
@@ -73,9 +101,9 @@ const styles = {
     padding: 0 ,
     margin: 0,
     borderRadius: "50%",
-    backgroundColor: "rgba(20, 24, 31, 0.45)",
-    border: "1px solid rgba(255, 255, 255, 0.25)",
-    color: "#ffffff",
+    backgroundColor: "rgba(31, 21, 12, 0.55)",
+    border: "1px solid rgba(201, 162, 39, 0.35)",
+    color: "#F7F1E3",
     fontSize: 24,
     lineHeight: 1,
     cursor: "pointer",
@@ -135,6 +163,8 @@ export default function HeroSection() {
       <div style={styles.overlay} />
 
       <div style={styles.content}>
+        <p style={styles.kicker}>សួស្តីឆ្នាំថ្មី · KHMER LIVING ARCHIVE</p>
+        <div style={styles.divider} aria-hidden="true" />
         <h2 style={styles.heading}>{current.heading}</h2>
 
         {current.subtitle && (

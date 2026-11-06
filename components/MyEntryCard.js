@@ -2,9 +2,6 @@ import Link from "next/link";
 import StatusBadge from "./StatusBadge";
 import { STATUS_LABELS } from "../lib/statusLabels.js";
 
-// One submitted entry in the "My entries" list: a clickable title, the review
-// status in English (badge) with the Khmer label alongside, and the
-// contributor and place. Reuses StatusBadge and the archive card look.
 const styles = {
   card: {
     padding: 24,

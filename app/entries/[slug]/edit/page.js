@@ -42,12 +42,6 @@ const styles = {
 
 export default async function EditEntryPage({ params }) {
   const { slug } = await params;
-
-  // The entry is read the same way the detail page reads it — a public,
-  // session-free lookup through the static client (safe at build time and
-  // at request time). The session/owner check happens client-side in
-  // EntryEditForm and is only a courtesy gate; Row Level Security is the
-  // actual gate for the UPDATE.
   let entry = null;
   try {
     const supabase = createStaticClient();

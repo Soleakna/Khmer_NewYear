@@ -14,11 +14,11 @@ const collection = {
   // description: "A living archive of a piece of Khmer culture, built for ICT 340.",
 
   // Who is building this archive? Your name, as you want it shown.
-  curator: "Soleakna",
+  // curator: "Soleakna",
 
   // Where does your knowledge come from? A person, a place, a community.
-  source:
-    "My family and the community of Kbal Trach village, Kratie province, Cambodia",
+  // source:
+  //   "My family and the community of Kbal Trach village, Kratie province, Cambodia",
 };
 
 export default collection;

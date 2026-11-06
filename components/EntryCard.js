@@ -8,23 +8,15 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     cursor: "pointer",
-    padding: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    border: "1px solid rgba(255, 255, 255, 0.18)",
-    borderRadius: 10,
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
+    padding: 18,
+    backgroundColor: "rgba(43, 27, 18, 0.6)",
+    border: "1px solid rgba(241, 232, 216, 0.14)",
+    borderRadius: 14,
+    backdropFilter: "blur(14px)",
+    WebkitBackdropFilter: "blur(14px)",
+    boxShadow: "0 12px 32px rgba(20, 10, 5, 0.25)",
   },
-  // Wrapper that reserves the same total space in every card: a title area of
-  // up to 2 lines (2 x 28.8px) + a 12px gap + a description area of up to 3
-  // lines (3 x 25.6px) = 146.4px. The title keeps its natural height and the
-  // description grows (flexGrow) to fill whatever the title did not use, so
-  // the description always starts just below the title's last line and any
-  // spare space lands BELOW the description — never between the title and the
-  // description. The red divider therefore stays at the same height whether
-  // a title is one line ("Chol Chhoung", "Teanh Prot") or two lines (the
-  // "Leak Kanseng (ល្បែងលាក់កន្សែង)" card).
+
   textBlock: {
     display: "flex",
     flexDirection: "column",
@@ -34,7 +26,7 @@ const styles = {
   title: {
     fontSize: 24,
     fontWeight: 700,
-    color: "#ffffff",
+    color: "#FFF8EC",
     lineHeight: 1.2,
     margin: "0 0 12px", // the small, consistent gap between title and description
     flexShrink: 0,
@@ -45,6 +37,7 @@ const styles = {
   },
   description: {
     fontSize: 16,
+    textAlign: "left",
     color: "#ffffff",
     lineHeight: 1.6,
     margin: 0,
@@ -69,12 +62,12 @@ const styles = {
   label: {
     // fontFamily: "'Courier New', monospace",
     fontSize: 14,
-    color: "",
+    color: "#D9B64A",
     margin: "2px 0 0",
   },
   value: {
     fontSize: 16,
-    color: "#ffffff",
+    color: "#F1E8D8",
     margin: "4px 0 0",
   },
   row: {
@@ -88,7 +81,7 @@ const styles = {
     width: "100%",
     height: 200,
     objectFit: "cover",
-    borderRadius: 8,
+    borderRadius: 10,
     marginBottom: 12, // uniform 12px gap before the title
     flexShrink: 0,
   },
@@ -97,7 +90,7 @@ const styles = {
     backgroundColor: "#CA2A02",
     border: "1px solid #972002",
     color: "#FFFFFF",
-    borderRadius: 8,
+    borderRadius: 10,
     textDecoration: "none",
     fontSize: 15,
     fontWeight: 600,
@@ -145,11 +138,11 @@ export default function EntryCard({ entry }) {
       </div>
       <div style={styles.separator} aria-hidden="true" />
       <p style={styles.row}>
-        <span style={{ ...styles.label, margin: 0 }}>CONTRIBUTED BY : </span>
+        <span style={{ ...styles.label, margin: 0 }}>Ccontributed by : </span>
         <span style={{ ...styles.value, margin: 0 }}>{contributor}</span>
       </p>
       <p style={styles.row}>
-        <span style={{ ...styles.label, margin: 0 }}>PLACE : </span>
+        <span style={{ ...styles.label, margin: 0 }}>Place : </span>
         <span style={{ ...styles.value, margin: 0 }}>{place}</span>
       </p>
       <div style={styles.spacer} aria-hidden="true" />

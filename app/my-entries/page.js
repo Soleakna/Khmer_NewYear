@@ -4,9 +4,6 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase/client.js";
 import MyEntryCard from "../../components/MyEntryCard";
 
-// Page-level styles only. Each entry row is rendered by the reusable
-// MyEntryCard component (components/MyEntryCard.js), which owns the card,
-// title-link, status and meta styles.
 const styles = {
   wrap: {
     maxWidth: 900,

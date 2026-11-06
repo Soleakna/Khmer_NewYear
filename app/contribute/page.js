@@ -265,17 +265,8 @@ export default function ContributePage() {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // True after a successful insert: the form is replaced by a confirmation
-  // message (new entries sit in `pending` until a reviewer approves them).
   const [submitted, setSubmitted] = useState(false);
-  // Guards the async image check: only the newest URL's callbacks may update
-  // urlStatus/urlPreview, so a slower older request cannot overwrite a newer
-  // one while the user keeps typing.
   const urlCheckIdRef = useRef(0);
-
-  // Ask Supabase who the current session belongs to. The form is only shown
-  // to a signed-in user; hiding it is a courtesy, not a security boundary
-  // (RLS policies are the real gate).
   useEffect(() => {
     let cancelled = false;
 
