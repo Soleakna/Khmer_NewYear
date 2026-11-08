@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createStaticClient } from "../../../../lib/supabase/server.js";
+import { createClient } from "../../../../lib/supabase/server.js";
 import EntryEditForm from "../../../../components/EntryEditForm";
 
 const styles = {
@@ -44,7 +44,8 @@ export default async function EditEntryPage({ params }) {
   const { slug } = await params;
   let entry = null;
   try {
-    const supabase = createStaticClient();
+    // Signed-in client: lets the owner (and reviewers) open unpublished entries.
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("entries")
       .select("*")

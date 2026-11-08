@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import collection from "../collection.config.js";
 import { createClient } from "../lib/supabase/client.js";
@@ -94,44 +94,104 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isReviewer, setIsReviewer] = useState(false);
+  // Mirrors `user.id` for the auth listener, which must not read stale state.
+  const userIdRef = useRef(null);
 
-  // Same session check pattern as AuthStatus: ask Supabase who the
-  // current session belongs to once on mount.
+  // Ask Supabase who the session belongs to on mount, then keep the navbar in
+  // sync with every sign-in, sign-out, and token refresh (including sign-out
+  // or account switches made in another tab).
   useEffect(() => {
     let cancelled = false;
+    const supabase = createClient();
+
+    // Single place that writes the user, so userIdRef always matches it.
+    function applyUser(nextUser) {
+      userIdRef.current = nextUser?.id ?? null;
+      setUser(nextUser ?? null);
+    }
 
     async function loadUser() {
       try {
-        const { data, error } = await createClient().auth.getUser();
-        if (!cancelled) setUser(error ? null : data.user);
+        const { data, error } = await supabase.auth.getUser();
+        if (!cancelled) applyUser(error ? null : data.user);
       } catch {
-        if (!cancelled) setUser(null);
+        if (!cancelled) applyUser(null);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     }
 
     loadUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (cancelled) return;
+        if (event === "SIGNED_OUT") {
+          applyUser(null);
+          return;
+        }
+        if (event === "SIGNED_IN") {
+          const nextUserId = session?.user?.id ?? null;
+          const previousUserId = userIdRef.current;
+          // A different account signed in: reload so every page shows that
+          // account's content instead of the previous user's.
+          if (previousUserId && nextUserId && previousUserId !== nextUserId) {
+            window.location.assign("/");
+            return;
+          }
+          applyUser(session?.user ?? null);
+          return;
+        }
+        if (event === "TOKEN_REFRESHED") {
+          applyUser(session?.user ?? null);
+        }
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Show the Review Queue link only to reviewers. This is convenience only:
+  // the queue loads its data through RLS, and the database enforces the rules.
+  useEffect(() => {
+    if (!user) {
+      setIsReviewer(false);
+      return;
+    }
+    let cancelled = false;
+    createClient()
+      .rpc("is_reviewer")
+      .then(({ data, error }) => {
+        if (!cancelled) setIsReviewer(!error && data === true);
+      })
+      .catch(() => {
+        if (!cancelled) setIsReviewer(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   async function handleLogout() {
     if (isSigningOut) return;
     setIsSigningOut(true);
 
     try {
-      // Sign out through Supabase and clear the auth cookies. The SDK
-      // clears the local session even if the revoke request cannot reach
-      // the server, so the UI can update immediately.
+      // Clears the Supabase session cookies. The SDK removes the local session
+      // even if the revoke request cannot reach the server.
       await createClient().auth.signOut();
     } catch {
       // Ignored on purpose: the local session is cleared either way.
     }
 
-    setUser(null);
-    setIsSigningOut(false);
+    // Full navigation, not router.push: this drops all in-memory page data
+    // from the previous account, and the public archive then loads as an
+    // anonymous visitor (published entries only).
+    window.location.assign("/");
   }
 
   return (
@@ -163,6 +223,15 @@ export default function Navbar() {
             >
               My Entries
             </Link>
+            {isReviewer && (
+              <Link
+                href="/review"
+                style={styles.action}
+                className="hover-button"
+              >
+                Review Queue
+              </Link>
+            )}
             <Link
               href="/profile"
               style={styles.profile}

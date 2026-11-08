@@ -452,9 +452,6 @@ export default function EntryEditForm({ entry }) {
         return;
       }
 
-      const { data: isReviewer, error: reviewerError } =
-        await supabase.rpc("is_reviewer");
-      const isReviewerUser = !reviewerError && isReviewer === true;
 
       let storagePath = null;
       let newPhotoUrl = null;
@@ -498,9 +495,9 @@ export default function EntryEditForm({ entry }) {
         updateFields.photo = newPhotoUrl;
       }
 
-      if (!isReviewerUser) {
-        updateFields.status = "pending";
-      }
+      // Every owner edit goes back to review, including a reviewer's own entry.
+      // The database policy enforces this too.
+      updateFields.status = "pending";
 
 
       const { data: updated, error: updateError } = await supabase

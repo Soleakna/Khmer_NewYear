@@ -1,6 +1,7 @@
 import Link from "next/link";
 import EntryOwnerActions from "../../../components/EntryOwnerActions";
-import { createStaticClient } from "../../../lib/supabase/server.js";
+import StatusBadge from "../../../components/StatusBadge";
+import { createClient, createStaticClient } from "../../../lib/supabase/server.js";
 
 const styles = {
   wrap: {
@@ -79,6 +80,16 @@ const styles = {
     fontSize: 16,
     fontWeight: 600,
   },
+  notice: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 10,
+    fontSize: 15,
+    color: "#ffffff",
+    margin: "24px 0 0",
+  },
   missing: {
     fontSize: 18,
     color: "#ffffff",
@@ -115,7 +126,9 @@ export default async function EntryDetail({ params }) {
   const { slug } = await params;
   let entry = null;
   try {
-    const supabase = createStaticClient();
+    // Signed-in client: lets the owner (and reviewers) open unpublished entries.
+    // Visitors without a session still see only published rows.
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("entries")
       .select("*")
@@ -171,6 +184,12 @@ export default async function EntryDetail({ params }) {
         <span style={styles.label}>Place: </span>
         <span style={styles.value}>{entry.place}</span>
       </p>
+      {entry.status && entry.status !== "published" && (
+        <p style={styles.notice}>
+          <StatusBadge status={entry.status} />
+          Not public yet. Only the contributor and reviewers can see this entry.
+        </p>
+      )}
       <EntryOwnerActions slug={entry.slug} id={entry.id} owner={entry.owner} />
       <Link href="/" style={styles.back} className="hover-button">
         ← Back to home
