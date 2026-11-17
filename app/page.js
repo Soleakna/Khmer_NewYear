@@ -8,6 +8,7 @@ import { createClient } from "../lib/supabase/client.js";
 const styles = {
   wrap: {
     width: "100%",
+    boxSizing: "border-box",
     maxWidth: 1120,
     margin: "0 auto",
     padding: "clamp(48px, 7vw, 96px) clamp(20px, 5vw, 32px)",
@@ -22,7 +23,7 @@ const styles = {
     margin: "0 0 14px",
   },
   title: {
-    fontSize: "clamp(38px, 6vw, 64px)",
+    fontSize: "clamp(32px, 6vw, 64px)",
     fontWeight: 700,
     color: "#FFF8EC",
     letterSpacing: "-0.5px",
@@ -341,7 +342,7 @@ export default function Home() {
           <p style={styles.noResults}>
             {entries.length === 0
               ? "No entries in the archive yet. Come back soon."
-              : `No results for "{query}".`}
+              : `No results for "${query.trim()}".`}
           </p>
         )}
 

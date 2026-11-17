@@ -8,7 +8,6 @@ const styles = {
   wrap: {
     maxWidth: 900,
     margin: "0 auto",
-    padding: "80px 20px",
   },
   kicker: {
     fontFamily: "'Courier New', monospace",
@@ -17,7 +16,6 @@ const styles = {
     letterSpacing: 1,
   },
   title: {
-    fontSize: 40,
     fontWeight: 700,
     margin: "16px 0 8px",
     lineHeight: 1.2,
@@ -120,9 +118,9 @@ export default function MyEntriesPage() {
   }, []);
 
   return (
-    <main style={styles.wrap}>
+    <main className="page-wrap" style={styles.wrap}>
       <p style={styles.kicker}>KHMER LIVING ARCHIVE</p>
-      <h1 style={styles.title}>My entries</h1>
+      <h1 className="page-title" style={styles.title}>My entries</h1>
 
       {authLoading ? (
         <p style={styles.message}>Checking your session…</p>

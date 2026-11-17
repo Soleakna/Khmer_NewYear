@@ -83,7 +83,7 @@ input.search-input::-webkit-search-cancel-button {
  /* Card grid on the browse/search page. */
 .entry-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   row-gap: 30px;
   column-gap: 28px;
   margin-top: 48px;
@@ -91,13 +91,13 @@ input.search-input::-webkit-search-cancel-button {
 
 @media (max-width: 1015px) {
   .entry-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 707px) {
   .entry-grid {
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
 
@@ -132,5 +132,160 @@ input.search-input::-webkit-search-cancel-button {
   .hero-slide,
   .hero-arrow {
     transition: none;
+  }
+}
+
+/* ============================================================
+   Responsive layout
+   Desktop (1024px and up) keeps the original design. Tablets
+   (640px to 1023px) and phones (639px and below) override it below.
+   ============================================================ */
+
+/* Shared page container and page titles (forms, lists, review queue). */
+.page-wrap {
+  padding: 80px 20px;
+}
+.page-title {
+  font-size: 40px;
+}
+
+/* Entry detail page. */
+.entry-detail {
+  padding: 48px 20px;
+}
+.entry-detail-image {
+  height: 420px;
+}
+
+/* Navbar: a single row on desktop. */
+.site-nav {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 14px 24px;
+}
+.site-nav-right {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* Hero arrows: vertically centered on the sides on desktop. */
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+}
+
+/* Footer: all three sections in ONE row on desktop and tablet.
+   Flexbox with nowrap keeps them on a single line. The two side sections
+   share the free space equally, so the Quick link block stays centered. */
+.site-footer {
+  padding: 36px 20px;
+}
+.site-footer-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+}
+.site-footer-left,
+.site-footer-right {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+}
+.site-footer-left {
+  text-align: left;
+}
+.site-footer-right {
+  text-align: right;
+}
+.site-footer-middle {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Tablets: the footer stays in one row. The side texts may wrap inside
+   their own column so the row still fits the narrower width. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .page-wrap {
+    padding: 72px 24px;
+  }
+  /* Navbar: the button group wraps to its own line, aligned right, if the
+     brand and buttons do not fit side by side. */
+  .site-nav-right {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .site-footer {
+    padding: 32px 24px;
+  }
+  .site-footer-inner {
+    column-gap: 20px;
+    gap: 20px;
+  }
+  .site-footer-left,
+  .site-footer-right {
+    white-space: normal;
+  }
+}
+
+/* Phones: one column everywhere, smaller type and spacing. */
+@media (max-width: 639px) {
+  .page-wrap {
+    padding: 40px 16px;
+  }
+  .page-title {
+    font-size: 32px;
+  }
+  .entry-detail {
+    padding: 28px 16px;
+  }
+  .entry-detail-image {
+    height: 240px;
+  }
+  .site-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  .site-nav-right {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .entry-grid {
+    margin-top: 32px;
+  }
+  /* Hero arrows stay vertically centered on the sides, as on desktop.
+     Only the size changes on phones. */
+  .hero-arrow {
+    width: 36px;
+    height: 36px;
+  }
+  .site-footer {
+    padding: 28px 16px;
+  }
+  /* Phones: the three sections stack vertically, centered. */
+  .site-footer-inner {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  .site-footer-left,
+  .site-footer-middle,
+  .site-footer-right {
+    flex: 0 0 auto;
+    width: 100%;
+    text-align: center;
+    white-space: normal;
   }
 }

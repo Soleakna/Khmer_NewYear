@@ -14,11 +14,10 @@ const styles = {
     width: "100%",
     boxSizing: "border-box",
     display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
     gap: 16,
-    padding: "14px 24px",
+    // Padding and stacking live in .site-nav (app/search.css) so phones can
+    // stack the brand above the buttons.
     backgroundColor: "rgba(31, 21, 12, 0.82)",
     borderBottom: "1px solid rgba(201, 162, 39, 0.28)",
     backdropFilter: "blur(16px)",
@@ -34,8 +33,6 @@ const styles = {
   },
   right: {
     display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
     gap: 10,
   },
   contribute: {
@@ -195,14 +192,14 @@ export default function Navbar() {
   }
 
   return (
-    <nav style={styles.nav}>
+    <nav className="site-nav" style={styles.nav}>
       {/* Left side: the archive name. Swap this <Link> for an <img> or
           logo component later without touching the right side. */}
       <Link href="/" style={styles.brand} className="hover-button">
         {collection.name}
       </Link>
 
-      <div style={styles.right}>
+      <div className="site-nav-right" style={styles.right}>
         <Link
           href="/contribute"
           style={styles.contribute}

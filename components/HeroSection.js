@@ -90,13 +90,11 @@ const styles = {
   
   arrow: {
     position: "absolute",
-    top: "50%",
-    transform: "translateY(-50%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 44,
-    height: 44,
+    // Position and size live in .hero-arrow (app/search.css) so phones can
+    // move the arrows below the heading instead of over it.
     boxSizing: "border-box",
     padding: 0 ,
     margin: 0,

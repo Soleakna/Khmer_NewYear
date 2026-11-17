@@ -99,6 +99,7 @@ const styles = {
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: 12,
     marginTop: 12,
@@ -138,7 +139,7 @@ export default function EntryCard({ entry }) {
       </div>
       <div style={styles.separator} aria-hidden="true" />
       <p style={styles.row}>
-        <span style={{ ...styles.label, margin: 0 }}>Ccontributed by : </span>
+        <span style={{ ...styles.label, margin: 0 }}>Contributed by : </span>
         <span style={{ ...styles.value, margin: 0 }}>{contributor}</span>
       </p>
       <p style={styles.row}>

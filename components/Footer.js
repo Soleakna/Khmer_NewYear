@@ -11,33 +11,20 @@ const styles = {
   footer: {
     width: "100%",
     boxSizing: "border-box",
-    padding: "36px 20px",
+    // Padding lives in .site-footer (app/search.css) so phones get less.
     backgroundColor: "#CA2A02",
     borderTop: "1px solid #972002",
     color: "#ffffff",
   },
-  // Three forced columns in ONE row. The explicit "1fr auto 1fr" grid tracks
-  // pin the middle section to the visual center and make it impossible for
-  // any section to wrap to another row (grid columns never wrap on their
-  // own), on desktop and mobile alike.
-  inner: {
-    width: "100%",
-    maxWidth: 1200,
-    margin: "0 auto",
-    display: "grid",
-    gridTemplateColumns: "1fr auto 1fr",
-    alignItems: "center",
-    columnGap: 32,
-  },
+  // Column layout (desktop: three columns in one row; tablet: two columns;
+  // phone: stacked) lives in the .site-footer* rules in app/search.css, so
+  // media queries can change it. Only text styling stays inline here.
   left: {
     fontSize: 16,
     lineHeight: 1.6,
-    whiteSpace: "nowrap",
     margin: 0,
-    justifySelf: "start",
   },
   middle: {
-    justifySelf: "center",
     textAlign: "center",
   },
   title: {
@@ -63,9 +50,7 @@ const styles = {
   right: {
     fontSize: 16,
     lineHeight: 1.6,
-    whiteSpace: "nowrap",
     margin: 0,
-    justifySelf: "end",
   },
 };
 
@@ -76,11 +61,11 @@ export default function Footer() {
   if (pathname === "/contribute") return null;
 
   return (
-    <footer style={styles.footer}>
-      <div style={styles.inner}>
-        <p style={styles.left}>American University of Phnom Penh.</p>
+    <footer className="site-footer" style={styles.footer}>
+      <div className="site-footer-inner">
+        <p className="site-footer-left" style={styles.left}>American University of Phnom Penh.</p>
 
-        <div style={styles.middle}>
+        <div className="site-footer-middle" style={styles.middle}>
           <p style={styles.title}>Quick link</p>
           <div style={styles.links}>
             <Link
@@ -107,7 +92,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <p style={styles.right}>Built in ICT 340 — Vibe Coding, Fall 2026</p>
+        <p className="site-footer-right" style={styles.right}>Built in ICT 340 — Vibe Coding, Fall 2026</p>
       </div>
     </footer>
   );

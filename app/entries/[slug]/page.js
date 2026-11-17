@@ -7,16 +7,13 @@ const styles = {
   wrap: {
     maxWidth: 900,
     margin: "0 auto",
-    padding: "48px 20px",
   },
   image: {
     width: "100%",
-    height: 420,
     objectFit: "cover",
     borderRadius: 12,
   },
   title: {
-    fontSize: 40,
     fontWeight: 700,
     color: "#ffffff",
     lineHeight: 1.2,
@@ -146,7 +143,7 @@ export default async function EntryDetail({ params }) {
 
   if (!entry) {
     return (
-      <main style={styles.wrap}>
+      <main className="entry-detail" style={styles.wrap}>
         <p style={styles.missing}>
           Sorry, there is no such entry in this archive.
         </p>
@@ -161,11 +158,16 @@ export default async function EntryDetail({ params }) {
   const photoSrc = entry.photo || entry.image;
 
   return (
-    <main style={styles.wrap}>
+    <main className="entry-detail" style={styles.wrap}>
       {photoSrc && (
-        <img src={photoSrc} alt={entry.title} style={styles.image} />
+        <img
+          src={photoSrc}
+          alt={entry.title}
+          className="entry-detail-image"
+          style={styles.image}
+        />
       )}
-      <h1 style={styles.title}>{entry.title}</h1>
+      <h1 className="page-title" style={styles.title}>{entry.title}</h1>
       <p style={styles.langLabel}>ENGLISH</p>
       <p style={styles.text}>{text}</p>
       <p style={styles.langLabel}>ភាសាខ្មែរ</p>
