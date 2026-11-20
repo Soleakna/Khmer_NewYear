@@ -69,7 +69,6 @@ const styles = {
     margin: "6px 0 0",
   },
   noResults: {
-    maxWidth: 700,
     margin: "48px 0 0",
     padding: "24px 28px",
     backgroundColor: "rgba(43, 27, 18, 0.55)",
