@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import collection from "../collection.config.js";
 import EntryCard from "../components/EntryCard";
 import HeroSection from "../components/HeroSection";
@@ -123,6 +123,10 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [titleChars, setTitleChars] = useState(1);
+  // Points at the card grid so we can scroll to its first row.
+  const gridRef = useRef(null);
+  // Set by the page buttons; the scroll happens after the new page renders.
+  const pendingScrollRef = useRef(false);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -207,6 +211,32 @@ export default function Home() {
     startIndex + ITEMS_PER_PAGE
   );
 
+  // After a page button changes the page, scroll to the top of the card grid,
+  // leaving room for the sticky navbar. Search does not set the pending flag.
+  useEffect(() => {
+    if (!pendingScrollRef.current) return;
+    pendingScrollRef.current = false;
+    const grid = gridRef.current;
+    if (!grid) return;
+    const nav = document.querySelector(".site-nav");
+    const navHeight = nav ? nav.getBoundingClientRect().height : 0;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    const top =
+      grid.getBoundingClientRect().top + window.scrollY - navHeight - 16;
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
+  }, [safePage]);
+
+  function goToPage(page) {
+    if (page === safePage) return;
+    pendingScrollRef.current = true;
+    setCurrentPage(page);
+  }
+
   return (
     <>
       <HeroSection />
@@ -283,7 +313,7 @@ export default function Home() {
           <p style={styles.noResults}>Loading entries…</p>
         ) : filteredEntries.length > 0 ? (
           <>
-            <div className="entry-grid">
+            <div className="entry-grid" ref={gridRef}>
               {paginatedEntries.map((entry) => (
                 <EntryCard key={entry.title} entry={entry} />
               ))}
@@ -299,7 +329,7 @@ export default function Home() {
                     cursor: safePage === 1 ? "default" : "pointer",
                   }}
                   disabled={safePage === 1}
-                  onClick={() => setCurrentPage(safePage - 1)}
+                  onClick={() => goToPage(safePage - 1)}
                 >
                   Previous
                 </button>
@@ -315,7 +345,7 @@ export default function Home() {
                           : styles.pageButton
                       }
                       aria-current={page === safePage ? "page" : undefined}
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => goToPage(page)}
                     >
                       {page}
                     </button>
@@ -330,7 +360,7 @@ export default function Home() {
                     cursor: safePage === totalPages ? "default" : "pointer",
                   }}
                   disabled={safePage === totalPages}
-                  onClick={() => setCurrentPage(safePage + 1)}
+                  onClick={() => goToPage(safePage + 1)}
                 >
                   Next
                 </button>
