@@ -195,7 +195,11 @@ export default function Navbar() {
     <nav className="site-nav" style={styles.nav}>
       {/* Left side: the archive name. Swap this <Link> for an <img> or
           logo component later without touching the right side. */}
-      <Link href="/" style={styles.brand} className="hover-button">
+      <Link
+        href="/"
+        style={styles.brand}
+        className="hover-button site-nav-brand"
+      >
         {collection.name}
       </Link>
 

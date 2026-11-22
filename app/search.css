@@ -257,6 +257,10 @@ input.search-input::-webkit-search-cancel-button {
     gap: 10px;
     padding: 12px 16px;
   }
+  .site-nav-brand {
+    width: 100%;
+    text-align: center;
+  }
   .site-nav-right {
     flex-wrap: wrap;
     gap: 8px;
